@@ -1,0 +1,8 @@
+# Binary and rebuildable - carried between CI runs via cache/artifact, not git.
+registry.sqlite
+*.sqlite-journal
+
+__pycache__/
+*.pyc
+.venv/
+venv/

@@ -1,0 +1,149 @@
+name: Daily registry scrape
+
+# Runs the full ASX share registry scrape once a day, carries the SQLite database
+# across runs so registry changes can be detected, and commits the exported CSV
+# back to the repo as a diffable record. A day where nothing changed writes no
+# rows and produces no commit.
+
+on:
+  schedule:
+    # 20:10 UTC = 6:10am AEST / 7:10am AEDT, after the ASX overnight data refresh.
+    - cron: "10 20 * * *"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Only fetch the first N codes (leave blank for the full market)"
+        required: false
+        default: ""
+
+concurrency:
+  group: registry-scrape
+  cancel-in-progress: false
+
+permissions:
+  contents: write # commit the CSV export back to the repo
+  issues: write # raise an issue when a company switches registrar
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # The database is the only thing carrying state between runs - without a
+      # previous snapshot there is nothing to compare against, so a cache miss
+      # means this run records a baseline and detects no changes (it never
+      # produces false positives). The unique key forces a fresh save each run;
+      # restore-keys picks up the most recent previous save.
+      - name: Restore registry database
+        id: db-cache
+        uses: actions/cache@v4
+        with:
+          path: registry.sqlite
+          key: registry-db-${{ github.run_id }}
+          restore-keys: registry-db-
+
+      # Fallback if the cache was evicted: recover the database from the most
+      # recent successful run's artifact so history is not lost.
+      - name: Recover database from last artifact
+        if: steps.db-cache.outputs.cache-matched-key == ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_id=$(gh run list --workflow "${{ github.workflow }}" --status success \
+            --limit 1 --json databaseId --jq '.[0].databaseId')
+          if [ -n "$run_id" ]; then
+            gh run download "$run_id" --name registry-db --dir . && \
+              echo "Recovered database from run $run_id"
+          else
+            echo "No previous successful run; starting a fresh database."
+          fi
+
+      - name: Scrape share registries
+        run: |
+          python registry_tracker.py fetch \
+            ${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}
+
+      - name: Export CSV
+        run: python registry_tracker.py export data/asx_registries.csv
+
+      - name: Write job summary
+        run: |
+          {
+            echo '## ASX share registry - '"$(date -u +%Y-%m-%d)"
+            echo '```'
+            python registry_tracker.py summary
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Surface changes detected on today's run as step outputs.
+      - name: Detect registry changes
+        id: changes
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import sqlite3, datetime
+          conn = sqlite3.connect("registry.sqlite")
+          today = datetime.date.today().isoformat()
+          rows = conn.execute(
+              """SELECT ch.code, c.name, ch.old_registry, ch.new_registry
+                 FROM registry_change ch LEFT JOIN company c ON c.code = ch.code
+                 WHERE ch.detected_on = ? ORDER BY ch.code""",
+              (today,),
+          ).fetchall()
+          print(f"count={len(rows)}")
+          print("body<<EOF")
+          for code, name, old, new in rows:
+              print(f"- **{code}** ({name or 'unknown'}): {old} → {new}")
+          print("EOF")
+          PY
+
+      - name: Append changes to summary
+        if: steps.changes.outputs.count != '0'
+        run: |
+          {
+            echo '## Registry changes detected'
+            echo '${{ steps.changes.outputs.body }}'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open issue for registry changes
+        if: steps.changes.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --title "Registry change detected ($(date -u +%Y-%m-%d)): ${{ steps.changes.outputs.count }} company(s)" \
+            --body "${{ steps.changes.outputs.body }}
+
+          Detected by [run ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+
+      # The CSV is text and delta-compresses well, so committing it gives a
+      # durable, greppable history in git. The SQLite file stays out of the repo
+      # (see .gitignore) - it is binary and would bloat history.
+      - name: Commit CSV export
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/asx_registries.csv
+          if git diff --staged --quiet; then
+            echo "No change to the export."
+          else
+            git commit -m "data: ASX share registries $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Upload database
+        uses: actions/upload-artifact@v4
+        with:
+          name: registry-db
+          path: registry.sqlite
+          retention-days: 90
