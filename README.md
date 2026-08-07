@@ -86,9 +86,28 @@ Each company has exactly one `is_current` row in `registry_state`. On every run:
 The `run` table records every scrape with its tallies, so a quiet day is still provably a
 day the tracker ran and found nothing — as distinct from a day it didn't run.
 
+### Market cap
+
+Market cap is price-derived, so it moves every day. Refreshing it on every run would rewrite
+the whole company table daily and change the exported CSV daily, burying real registry
+changes in noise. It is therefore only written:
+
+1. **once per calendar month** — on the first run of a new month
+2. **for new listings** — a code appearing in the directory for the first time
+3. **for any company whose registry changed** — so the row being published is internally
+   consistent
+
+`market_cap_as_at` records when each figure was actually taken, and `summary` prints it, so
+a stale cap is never mistaken for a live one. Force one with `fetch --refresh-caps`.
+
+The monthly trigger keys off when a refresh was last *attempted* (`run.caps_refreshed`), not
+when a value last changed — otherwise a month in which no cap happened to move would
+re-trigger the refresh every day.
+
 ### Schema
 
-- `company` — code, name, GICS industry group, listing date, market cap, address, website
+- `company` — code, name, GICS industry group, listing date, market cap + `market_cap_as_at`,
+  address, website
 - `registry_state` — effective-dated registry per company: `first_seen`, `closed_on`,
   `is_current`, `closed_reason`, plus raw/canonical name, address, phone
 - `registry_change` — code, detected_on, old/new registry (canonical and raw)

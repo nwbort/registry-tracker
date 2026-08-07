@@ -275,15 +275,19 @@ def _to_int(value: str | None) -> int | None:
 # --------------------------------------------------------------------------
 
 SCHEMA = """
+-- Market cap is price-derived and moves every day, so it is deliberately NOT
+-- refreshed on every run - see should_refresh_caps(). market_cap_as_at records
+-- when the stored figure was actually taken.
 CREATE TABLE IF NOT EXISTS company (
-    code            TEXT PRIMARY KEY,
-    name            TEXT,
-    industry        TEXT,
-    listing_date    TEXT,
-    market_cap      INTEGER,
-    company_address TEXT,
-    website         TEXT,
-    updated_at      TEXT
+    code             TEXT PRIMARY KEY,
+    name             TEXT,
+    industry         TEXT,
+    listing_date     TEXT,
+    market_cap       INTEGER,
+    market_cap_as_at TEXT,
+    company_address  TEXT,
+    website          TEXT,
+    updated_at       TEXT
 );
 
 -- One row per (company, registry), written once and then left alone. Closed out
@@ -329,7 +333,9 @@ CREATE TABLE IF NOT EXISTS run (
     unchanged       INTEGER DEFAULT 0,
     data_gaps       INTEGER DEFAULT 0,
     errors          INTEGER DEFAULT 0,
-    delisted        INTEGER DEFAULT 0
+    delisted        INTEGER DEFAULT 0,
+    caps_written    INTEGER DEFAULT 0,
+    caps_refreshed  INTEGER DEFAULT 0
 );
 
 -- Only written when a fetch fails; empty on a healthy run.
@@ -349,21 +355,93 @@ def connect(db_path: Path = DB_PATH) -> sqlite3.Connection:
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
+    _migrate(conn)
     return conn
 
 
-def save_companies(conn: sqlite3.Connection, companies: list[Company]) -> None:
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Add columns introduced after a database was first created."""
+    run_cols = {row["name"] for row in conn.execute("PRAGMA table_info(run)")}
+    for col in ("caps_written", "caps_refreshed"):
+        if col not in run_cols:
+            conn.execute(f"ALTER TABLE run ADD COLUMN {col} INTEGER DEFAULT 0")
+            conn.commit()
+    have = {row["name"] for row in conn.execute("PRAGMA table_info(company)")}
+    if "market_cap_as_at" not in have:
+        conn.execute("ALTER TABLE company ADD COLUMN market_cap_as_at TEXT")
+        # Existing figures were captured at the last run we know about.
+        conn.execute(
+            "UPDATE company SET market_cap_as_at = (SELECT MAX(run_date) FROM run)"
+            " WHERE market_cap IS NOT NULL"
+        )
+        conn.commit()
+
+
+def should_refresh_caps(conn: sqlite3.Connection, run_date: str) -> bool:
+    """True on the first run of a calendar month (or if we've never stored any).
+
+    Keyed on when a refresh was last *attempted*, not when a value last changed -
+    otherwise a month where no cap happened to move would re-trigger every day.
+    """
+    last = conn.execute(
+        "SELECT MAX(run_date) FROM run WHERE caps_refreshed = 1"
+    ).fetchone()[0]
+    if last:
+        return last[:7] != run_date[:7]
+    stored = conn.execute("SELECT MAX(market_cap_as_at) FROM company").fetchone()[0]
+    return not stored or stored[:7] != run_date[:7]
+
+
+def save_companies(
+    conn: sqlite3.Connection, companies: list[Company], run_date: str, refresh_caps: bool
+) -> tuple[set[str], int]:
+    """Upsert directory data. Returns (new listing codes, market caps written).
+
+    Static fields are only written when they actually differ. Market cap is only
+    written for brand new listings, or when `refresh_caps` is set - it changes
+    every day and would otherwise churn the database and the exported CSV.
+    """
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    existing = {row["code"] for row in conn.execute("SELECT code FROM company")}
+    new_codes = {c.code for c in companies} - existing
+
     conn.executemany(
-        """INSERT INTO company (code, name, industry, listing_date, market_cap, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?)
+        """INSERT INTO company (code, name, industry, listing_date, market_cap,
+               market_cap_as_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(code) DO UPDATE SET
                name=excluded.name, industry=excluded.industry,
-               listing_date=excluded.listing_date, market_cap=excluded.market_cap,
-               updated_at=excluded.updated_at""",
-        [(c.code, c.name, c.industry, c.listing_date, c.market_cap, now) for c in companies],
+               listing_date=excluded.listing_date, updated_at=excluded.updated_at
+           WHERE company.name IS NOT excluded.name
+              OR company.industry IS NOT excluded.industry
+              OR company.listing_date IS NOT excluded.listing_date""",
+        [
+            (c.code, c.name, c.industry, c.listing_date, c.market_cap, run_date, now)
+            for c in companies
+        ],
     )
+
+    caps_written = len(new_codes)  # new listings carry their cap in on insert
+    if refresh_caps:
+        caps_written += update_market_caps(conn, run_date, companies)
     conn.commit()
+    return new_codes, caps_written
+
+
+def update_market_caps(
+    conn: sqlite3.Connection, run_date: str, companies: list[Company], only: set[str] | None = None
+) -> int:
+    """Write market caps, skipping rows where the figure hasn't moved."""
+    rows = [c for c in companies if only is None or c.code in only]
+    written = 0
+    for c in rows:
+        cur = conn.execute(
+            "UPDATE company SET market_cap = ?, market_cap_as_at = ?"
+            " WHERE code = ? AND market_cap IS NOT ?",
+            (c.market_cap, run_date, c.code, c.market_cap),
+        )
+        written += cur.rowcount
+    return written
 
 
 def current_state(conn: sqlite3.Connection, code: str) -> sqlite3.Row | None:
@@ -497,8 +575,13 @@ def cmd_fetch(args: argparse.Namespace) -> int:
 
     log.info("Fetching company directory...")
     companies = client.directory()
-    save_companies(conn, companies)
-    log.info("Directory: %d listed companies", len(companies))
+    refresh_caps = args.refresh_caps or should_refresh_caps(conn, run_date)
+    new_codes, caps_written = save_companies(conn, companies, run_date, refresh_caps)
+    log.info(
+        "Directory: %d listed companies, %d new listing(s)%s",
+        len(companies), len(new_codes),
+        ", monthly market cap refresh" if refresh_caps else "",
+    )
     listed_codes = {c.code for c in companies}
 
     full_market = not args.codes and not args.limit
@@ -511,40 +594,51 @@ def cmd_fetch(args: argparse.Namespace) -> int:
 
     log.info("Fetching registry details for %d companies (%d workers)...", len(targets), args.workers)
     tally = {"new": 0, "changed": 0, "unchanged": 0, "gap": 0, "error": 0}
+    touched: set[str] = set()
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         for i, rec in enumerate(pool.map(client.about, targets), start=1):
             outcome = apply_record(conn, run_date, rec, prev_run)
             tally[outcome] += 1
+            if outcome in ("new", "changed"):
+                touched.add(rec.code)
             if outcome == "error":
                 log.warning("%s: %s", rec.code, rec.error)
             if i % 250 == 0:
                 conn.commit()
                 log.info("  %d/%d", i, len(targets))
 
+    # A company whose registry just moved gets a fresh market cap alongside it,
+    # so the row we are about to publish is internally consistent.
+    if touched and not refresh_caps:
+        caps_written += update_market_caps(conn, run_date, companies, only=touched)
+
     delisted = close_delisted(conn, run_date, listed_codes) if full_market else 0
 
     conn.execute(
         """INSERT INTO run (run_date, started_at, finished_at, companies, new_states,
-               changed, unchanged, data_gaps, errors, delisted)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               changed, unchanged, data_gaps, errors, delisted, caps_written,
+               caps_refreshed)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(run_date) DO UPDATE SET
                finished_at=excluded.finished_at, companies=excluded.companies,
                new_states=excluded.new_states, changed=excluded.changed,
                unchanged=excluded.unchanged, data_gaps=excluded.data_gaps,
-               errors=excluded.errors, delisted=excluded.delisted""",
+               errors=excluded.errors, delisted=excluded.delisted,
+               caps_written=excluded.caps_written,
+               caps_refreshed=excluded.caps_refreshed""",
         (
             run_date, started, datetime.now(timezone.utc).isoformat(timespec="seconds"),
             len(targets), tally["new"], tally["changed"], tally["unchanged"],
-            tally["gap"], tally["error"], delisted,
+            tally["gap"], tally["error"], delisted, caps_written, int(refresh_caps),
         ),
     )
     conn.commit()
 
     log.info(
         "Run %s: %d companies - %d new, %d changed, %d unchanged, %d data gaps, "
-        "%d errors, %d delisted",
+        "%d errors, %d delisted, %d market caps written",
         run_date, len(targets), tally["new"], tally["changed"], tally["unchanged"],
-        tally["gap"], tally["error"], delisted,
+        tally["gap"], tally["error"], delisted, caps_written,
     )
     return 0
 
@@ -563,9 +657,11 @@ def cmd_summary(args: argparse.Namespace) -> int:
         print("No data yet - run 'fetch' first.")
         return 1
     last_run = conn.execute("SELECT MAX(run_date) FROM run").fetchone()[0]
+    cap_date = conn.execute("SELECT MAX(market_cap_as_at) FROM company").fetchone()[0]
     total = sum(r["companies"] for r in rows)
     total_cap = sum(r["market_cap"] for r in rows)
-    print(f"Share registry market share - ASX, as at {last_run} ({total} companies)\n")
+    print(f"Share registry market share - ASX, as at {last_run} ({total} companies)")
+    print(f"Market caps as at {cap_date}\n")
     print(f"{'Registry':<34}{'Cos':>6}{'Share':>8}{'Mkt cap $bn':>14}{'Cap %':>8}")
     print("-" * 70)
     for r in rows:
@@ -626,13 +722,18 @@ def cmd_runs(args: argparse.Namespace) -> int:
     if not rows:
         print("No runs recorded yet.")
         return 0
-    print(f"{'Run':<12}{'Cos':>6}{'New':>6}{'Chg':>6}{'Same':>7}{'Gaps':>6}{'Err':>6}{'Delist':>8}")
-    print("-" * 63)
+    print(
+        f"{'Run':<12}{'Cos':>6}{'New':>6}{'Chg':>6}{'Same':>7}{'Gaps':>6}{'Err':>6}"
+        f"{'Delist':>8}{'Caps':>7}"
+    )
+    print("-" * 70)
     for r in rows:
+        caps = f"{r['caps_written']}" + ("*" if r["caps_refreshed"] else "")
         print(
             f"{r['run_date']:<12}{r['companies']:>6}{r['new_states']:>6}{r['changed']:>6}"
-            f"{r['unchanged']:>7}{r['data_gaps']:>6}{r['errors']:>6}{r['delisted']:>8}"
+            f"{r['unchanged']:>7}{r['data_gaps']:>6}{r['errors']:>6}{r['delisted']:>8}{caps:>7}"
         )
+    print("\n* monthly market cap refresh")
     return 0
 
 
@@ -640,8 +741,8 @@ def cmd_export(args: argparse.Namespace) -> int:
     conn = connect(args.db)
     rows = conn.execute(
         """SELECT c.code, c.name, c.industry, c.listing_date, c.market_cap,
-                  s.registry_canonical, s.registry_raw, s.registry_address,
-                  s.registry_phone, s.first_seen
+                  c.market_cap_as_at, s.registry_canonical, s.registry_raw,
+                  s.registry_address, s.registry_phone, s.first_seen
            FROM registry_state s JOIN company c ON c.code = s.code
            WHERE s.is_current = 1 ORDER BY c.code"""
     ).fetchall()
@@ -653,8 +754,8 @@ def cmd_export(args: argparse.Namespace) -> int:
     with out.open("w", newline="", encoding="utf-8") as fh:
         writer = csv.writer(fh)
         writer.writerow(
-            ["code", "company", "industry", "listing_date", "market_cap", "registry",
-             "registry_raw", "registry_address", "registry_phone", "registry_since"]
+            ["code", "company", "industry", "listing_date", "market_cap", "market_cap_as_at",
+             "registry", "registry_raw", "registry_address", "registry_phone", "registry_since"]
         )
         writer.writerows([tuple(r) for r in rows])
     print(f"Wrote {len(rows)} rows to {out}")
@@ -673,6 +774,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_fetch = sub.add_parser("fetch", help="Scrape registries, recording only what changed")
     p_fetch.add_argument("--run-date", help="Override run date (YYYY-MM-DD)")
+    p_fetch.add_argument(
+        "--refresh-caps", action="store_true",
+        help="Force a market cap refresh (otherwise: monthly, new listings, and registry changes)",
+    )
     p_fetch.add_argument("--codes", help="Comma-separated ASX codes instead of the full market")
     p_fetch.add_argument("--limit", type=int, help="Only fetch the first N codes (testing)")
     p_fetch.add_argument("--workers", type=int, default=12, help="Concurrent requests (default 12)")
