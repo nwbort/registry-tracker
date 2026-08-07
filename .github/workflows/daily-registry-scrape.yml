@@ -30,9 +30,9 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -46,7 +46,7 @@ jobs:
       # restore-keys picks up the most recent previous save.
       - name: Restore registry database
         id: db-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: registry.sqlite
           key: registry-db-${{ github.run_id }}
@@ -54,8 +54,11 @@ jobs:
 
       # Fallback if the cache was evicted: recover the database from the most
       # recent successful run's artifact so history is not lost.
+      # `actions/cache` only emits `cache-hit`, which is an exact primary-key
+      # match - impossible here because the key embeds the run id. Test for the
+      # restored file instead.
       - name: Recover database from last artifact
-        if: steps.db-cache.outputs.cache-matched-key == ''
+        if: hashFiles('registry.sqlite') == ''
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
@@ -142,7 +145,7 @@ jobs:
           fi
 
       - name: Upload database
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: registry-db
           path: registry.sqlite
