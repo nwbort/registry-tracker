@@ -2,6 +2,11 @@
 registry.sqlite
 *.sqlite-journal
 
+# The working announcement database at the repo root stays untracked; the
+# published snapshot in data/ is committed deliberately. Root-anchored so the
+# two do not collide.
+/announcements.sqlite
+
 __pycache__/
 *.pyc
 .venv/

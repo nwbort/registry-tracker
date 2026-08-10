@@ -162,8 +162,240 @@ Automic dominates by company count (small caps), Computershare by market cap. Th
 are gaps in the ASX feed itself — those companies return an empty `attention` field
 upstream — not parse failures.
 
+## Historical changes (`announcement_history.py`)
+
+The tracker above only sees changes that happen *while it is running* — it diffs today's
+registrar against yesterday's, so its history starts the day it was first run.
+`announcement_history.py` goes the other way: it mines the ASX **announcement archive**,
+which reaches back to 1998, for the notices companies must lodge under Listing Rule 3.15.1
+when they change share registry. That reconstructs a registrar history for a ticker from
+long before this repo existed.
+
+```bash
+python announcement_history.py scan --codes ECS,BHP   # index announcements
+python announcement_history.py scan                   # whole market
+python announcement_history.py resolve                # read the candidate PDFs
+python announcement_history.py changes                # resolved switches
+python announcement_history.py timeline ECS           # one ticker
+python announcement_history.py export out.csv
+```
+
+### Which endpoint serves history
+
+The modern `asx.api.markitdigital.com/.../companies/{code}/announcements` JSON endpoint is
+**not** usable: it is hard-capped at the 5 most recent announcements and silently ignores
+`pageSize`, `page`, `count` and every date parameter. The market-wide
+`/markets/announcements` feed pages properly but only 25 at a time with no date filter, so
+walking it back years is hopeless.
+
+The one path that serves history is the legacy
+`www.asx.com.au/asx/v2/statistics/announcements.do`, and only in per-company-per-year
+slices (`by=asxCode&asxCode=ECS&timeframe=Y&year=2026`). `timeframe=D/W/M/A` and
+`by=date`/`by=announcementType` all return nothing, so there is no market-wide historical
+search — the crawl is necessarily company × year. Unlike the `asx/1/company/...` paths,
+this one is not behind Imperva.
+
+Two useful side effects: the page reports **ticker code changes** ("ECS is not the current
+code for this company. The new code is AYG"), and it returns one table per code a company
+has used, so a rename does not split the history.
+
+Scope is about 30,000 company-years for the full market — the crawl starts at each
+company's listing date rather than 1998, which prunes it by nearly half. That is roughly
+half an hour at the default pacing.
+
+### Why the PDFs get read
+
+The headline alone cannot tell you what happened, because two very different events share
+almost the same wording:
+
+| Headline | What it means |
+| --- | --- |
+| `Change of Share Registry` | the provider actually changed |
+| `Change of Share Registry Address` | the *same* registrar moved office |
+| `Details of Share Registry address` | same registrar, new address |
+
+Address notices outnumber real switches roughly three to one, and they arrive in clusters —
+when one registrar relocates, every client lodges on the same day. Only the PDF body names
+the outgoing and incoming registrar, so `resolve` fetches it.
+
+The headline therefore decides *ordering*, not eligibility: `resolve` opens address notices
+too. On a 60-notice sample, **6.7% of them were real switches** — companies do lodge a
+genuine change of provider under "Details of Share Registry address". `--skip-address`
+buys back about 35% of the fetches if that trade is not worth it.
+
+The PDF sits behind a terms-of-access interstitial: `displayAnnouncement.do?display=pdf&idsId=N`
+returns an HTML page whose hidden `pdfURL` field holds the real
+`announcements.asx.com.au/asxpdf/...` link. Two requests per document. Most of these PDFs
+set the "no text extraction" metadata flag; pdfminer notes it and proceeds.
+
+`resolve_registrars()` extracts the pair by trying, in decreasing order of confidence:
+an explicit `from X to Y`; an `X will cease` paired with an appointment phrase; either of
+those plus the only other registrar named in the document; or, failing all that, exactly
+two distinct registrar brands in order of appearance. The `method` column records which
+rule fired, so a `two_brands` guess is never mistaken for a stated `from_to`.
+
+Historical registrars that no longer appear in the live ASX feed (ASX Perpetual Registrars,
+Registries Limited, Security Transfer, White Outsourcing …) are added on top of
+`registry_tracker.canonical_registry`, so a 2004 announcement resolves to the same
+canonical names as a 2026 one.
+
+### How far back it actually works
+
+Three separate limits, worth keeping apart because they have different fixes:
+
+1. **The announcement index** parses cleanly back to 1998. So the *date* a company changed
+   registry is recoverable across the whole archive, always.
+2. **Before about 2010 the PDFs are image-only scans.** pdfminer returns nothing usable, so
+   the registrars cannot be read without OCR. This is entirely a pre-2010 problem — from
+   2010 onward every PDF in the full-market run yielded text.
+3. **A readable PDF may still name only one registrar.** Plenty of letters say "we have
+   appointed X" without naming who they left. That, not scanning, is what caps the 2010s.
+
+Measured over the full market (1,840 codes, 29,921 company-years):
+
+| Era | PDFs readable | Resolved to an old → new pair |
+| --- | --- | ---: |
+| before 2005 | 0 / 26 | 0 / 26 |
+| 2005–2009 | 38 / 65 | 21 / 65 (32%) |
+| 2010–2014 | 153 / 153 | 59 / 153 (39%) |
+| 2015–2019 | 209 / 209 | 118 / 209 (56%) |
+| 2020+ | 436 / 436 | 404 / 436 (**93%**) |
+
+So OCR would only buy back the pre-2010 rows. The 2010s gap needs something else — the
+prior registrar is often recoverable from the *previous* switch, or from what the daily
+tracker already knows, rather than from the document itself.
+
+Of the 696 pairs that resolve, 526 (76%) come from an explicit "from X to Y" in the text.
+53 rest on the weakest `two_brands` fallback — two registrar names in one document, taken
+in order of appearance. The `method` column keeps them apart; do not treat a `two_brands`
+row as equal evidence to a `from_to` one.
+
+`resolution.ok = 0` means the PDF was an image-only scan, not that parsing failed.
+
+### Worked example
+
+ECS Botanics is the case this was built from — its 30 July 2026 notice was the prompt. The
+archive turns up two switches, neither of which the daily tracker was alive to see:
+
+```
+CODE   DATE        FROM                TO             METHOD
+ECS    2026-07-30  Automic             Xcend          cease_plus_one
+ECS    2023-07-24  Computershare       Automic        from_to
+```
+
+### Full-market results (1,840 codes, 29,921 company-years)
+
+The whole market scanned in 25.9 minutes at ~17 requests/sec with **zero failed fetches**,
+turning up 2,020 registry-related announcements. All 2,020 PDFs were then fetched; 1,905
+yielded text and 115 were image-only scans, all of them pre-2010.
+
+**696 registrar switches across 599 of the 1,840 companies** — so roughly one company in
+three has changed registry at least once in a window the daily tracker could never have
+seen. 602 came from `provider_change` headlines, 53 from `address_only` and 41 from
+`registry_other`: the 94 from non-obvious headlines are what the headline-only approach
+would have missed.
+
+Net movement over the resolved history:
+
+| Registrar | Gained | Lost | Net |
+| --- | ---: | ---: | ---: |
+| Automic | 357 | 83 | **+274** |
+| Xcend | 45 | 0 | +45 |
+| Boardroom | 75 | 61 | +14 |
+| Computershare | 75 | 188 | **−113** |
+| MUFG Corporate Markets | 31 | 150 | **−119** |
+| Advanced Share Registry | 60 | 144 | −84 |
+| Security Transfer Australia | 24 | 50 | −26 |
+
+This is the picture the daily tracker cannot show: a one-way consolidation into Automic,
+with Xcend picking up 45 clients and losing none. Note the direction of travel is not the
+same as market share — Computershare still holds the large caps (55% of ASX market cap in
+the table above) while shedding small-cap mandates by count.
+
+Switches are heavily concentrated in time: **172 in 2024** against 39-71 in surrounding
+years. That spike is not 172 independent decisions — it is dominated by Automic absorbing
+Advanced Share Registry's book over a few days in early March 2024. Bulk transfers of a
+registrar's client list look identical to individual switches in this data, so treat
+same-week clusters as one event.
+
+`data/registry_changes_history.csv` is the flat export of all 696, with the `method` column
+so weaker inferences stay visible.
+
+### Schema (`announcements.sqlite`)
+
+Separate database from `registry.sqlite` — the daily tracker's state is unaffected by
+running this.
+
+A snapshot is committed at [`data/announcements.sqlite`](data/announcements.sqlite). Unlike
+`registry.sqlite`, which is rebuildable from a single day's scrape and so is gitignored,
+this one is expensive to rebuild (tens of thousands of archive requests) and describes a
+past that does not change — so it is worth carrying in the repo.
+
+**It currently covers 250 codes, not the whole market.** The `scanned` table records exactly
+which `(code, year)` pairs it holds, so running `scan` against it resumes rather than
+restarting: it will skip those 250 and crawl the rest. Point `--db` at it to extend it.
+
+Because it is a binary blob, git cannot diff it meaningfully — every scan rewrites the whole
+file. If it starts churning the history, `export` it to CSV and track that instead, which is
+the pattern `data/asx_registries.csv` already follows.
+
+`announcement` — one row per registry-related announcement found. Headlines that are not
+about a share registry are discarded at parse time and never stored.
+
+| Column | Meaning |
+| --- | --- |
+| `ids_id` | ASX announcement id (PK); also the key for the PDF URL |
+| `code` | code the announcement was **released under** |
+| `query_code` | code we searched for — differs from `code` after a ticker change |
+| `date` | release date, ISO |
+| `time` | release time as shown, e.g. `12:48 pm` |
+| `headline` | announcement title verbatim |
+| `classification` | `provider_change` / `address_only` / `registry_other` |
+| `price_sensitive` | 1 if flagged with the asterisk |
+| `pages` | page count |
+| `year` | the archive year slice it came from |
+
+`resolution` — one row per PDF opened. Separate from `announcement` so re-running `resolve`
+does not re-fetch, and so a failed extraction is recorded rather than retried forever.
+
+| Column | Meaning |
+| --- | --- |
+| `ids_id` | FK to `announcement` (PK) |
+| `pdf_url` | resolved `announcements.asx.com.au` link |
+| `old_registry` | outgoing registrar, canonical, NULL if not determined |
+| `new_registry` | incoming registrar, canonical, NULL if not determined |
+| `method` | which rule fired — `from_to` is strongest, `two_brands` weakest |
+| `brands` | every registrar named in the document, comma separated |
+| `resolved_at` | when the PDF was read |
+| `ok` | 1 if text was extractable — 0 means an image-only scan |
+
+`scanned` — one row per `(code, year)` fetched, so an interrupted crawl resumes and a year
+with genuinely no announcements is distinguishable from one never scanned.
+
+| Column | Meaning |
+| --- | --- |
+| `code`, `year` | composite PK |
+| `scanned_at` | when it was fetched |
+| `found` | total announcements on that page, before registry filtering |
+
+A registrar switch is `old_registry IS NOT NULL AND new_registry IS NOT NULL AND
+old_registry <> new_registry` — that is what `changes` and `export` select, and it draws
+from all three classifications, not just `provider_change`.
+
+### Terms of use
+
+The ASX PDF interstitial draws an explicit distinction between *private or personal
+investment* use, which is free, and **commercial or professional use, which it says
+requires ASX's express written authority**. Indexing headlines is one thing; systematically
+downloading the PDF archive is the part that engages this. Worth reading
+[the general conditions](https://www.asx.com.au/about/terms-use.htm) before pointing
+`resolve` at the whole market.
+
 ## Notes
 
 - The `access_token` in the directory URL is the public one embedded in the ASX website's
   own JavaScript. If the directory call starts 401ing, reload an ASX company page and pull
   the current token from the network tab.
+- `announcement_history.py` records every `(code, year)` it has fetched in a `scanned`
+  table, so an interrupted crawl resumes where it stopped. The current year is always
+  re-scanned, since it is still filling up.
