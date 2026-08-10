@@ -239,6 +239,21 @@ Registries Limited, Security Transfer, White Outsourcing …) are added on top o
 `registry_tracker.canonical_registry`, so a 2004 announcement resolves to the same
 canonical names as a 2026 one.
 
+One rebrand has to be collapsed on top of that, in `_BRAND_ALIASES`: **MPMS is not a
+separate registrar.** It is MUFG Pension & Market Services — the group MUFG Corporate
+Markets (itself the renamed Link Market Services) was rebranded to. The token barely ever
+appears as a company name in these letters; it arrives inside the letterhead domain
+`au.investorcentre.mpms.mufg.com`, which nearly every MUFG notice carries. Left as two
+brands, a routine "we have moved to MUFG" letter names both spellings and the resolver reads
+the rebrand as a company switching registrar — in whichever direction the two names happen
+to fall in the text, which is why one of the seven false switches this produced pointed the
+opposite way from the other six.
+
+The alias lives in `announcement_history.py` and is applied *after*
+`canonical_registry()`, which still maps `mpms` to its own `MPMS` brand. That is
+deliberate: the tracker's pattern also matches `mps market` and `market place`, which need
+not be MUFG at all, and the daily change alerts key off those names.
+
 ### How far back it actually works
 
 Three separate limits, worth keeping apart because they have different fixes:
@@ -259,14 +274,14 @@ Measured over the full market (1,840 codes, 29,921 company-years):
 | 2005–2009 | 38 / 65 | 21 / 65 (32%) |
 | 2010–2014 | 153 / 153 | 59 / 153 (39%) |
 | 2015–2019 | 209 / 209 | 118 / 209 (56%) |
-| 2020+ | 436 / 436 | 404 / 436 (**93%**) |
+| 2020+ | 436 / 436 | 402 / 436 (**92%**) |
 
 So OCR would only buy back the pre-2010 rows. The 2010s gap needs something else — the
 prior registrar is often recoverable from the *previous* switch, or from what the daily
 tracker already knows, rather than from the document itself.
 
-Of the 696 pairs that resolve, 526 (76%) come from an explicit "from X to Y" in the text.
-53 rest on the weakest `two_brands` fallback — two registrar names in one document, taken
+Of the 689 pairs that resolve, 526 (76%) come from an explicit "from X to Y" in the text.
+47 rest on the weakest `two_brands` fallback — two registrar names in one document, taken
 in order of appearance. The `method` column keeps them apart; do not treat a `two_brands`
 row as equal evidence to a `from_to` one.
 
@@ -289,10 +304,10 @@ The whole market scanned in 25.9 minutes at ~17 requests/sec with **zero failed 
 turning up 2,020 registry-related announcements. All 2,020 PDFs were then fetched; 1,905
 yielded text and 115 were image-only scans, all of them pre-2010.
 
-**696 registrar switches across 599 of the 1,840 companies** — so roughly one company in
+**689 registrar switches across 592 of the 1,840 companies** — so roughly one company in
 three has changed registry at least once in a window the daily tracker could never have
-seen. 602 came from `provider_change` headlines, 53 from `address_only` and 41 from
-`registry_other`: the 94 from non-obvious headlines are what the headline-only approach
+seen. 600 came from `provider_change` headlines, 48 from `address_only` and 41 from
+`registry_other`: the 89 from non-obvious headlines are what the headline-only approach
 would have missed.
 
 Net movement over the resolved history:
@@ -303,7 +318,7 @@ Net movement over the resolved history:
 | Xcend | 45 | 0 | +45 |
 | Boardroom | 75 | 61 | +14 |
 | Computershare | 75 | 188 | **−113** |
-| MUFG Corporate Markets | 31 | 150 | **−119** |
+| MUFG Corporate Markets | 30 | 144 | **−114** |
 | Advanced Share Registry | 60 | 144 | −84 |
 | Security Transfer Australia | 24 | 50 | −26 |
 
@@ -312,13 +327,13 @@ with Xcend picking up 45 clients and losing none. Note the direction of travel i
 same as market share — Computershare still holds the large caps (55% of ASX market cap in
 the table above) while shedding small-cap mandates by count.
 
-Switches are heavily concentrated in time: **172 in 2024** against 39-71 in surrounding
+Switches are heavily concentrated in time: **172 in 2024** against 39-65 in surrounding
 years. That spike is not 172 independent decisions — it is dominated by Automic absorbing
 Advanced Share Registry's book over a few days in early March 2024. Bulk transfers of a
 registrar's client list look identical to individual switches in this data, so treat
 same-week clusters as one event.
 
-`data/registry_changes_history.csv` is the flat export of all 696, with the `method` column
+`data/registry_changes_history.csv` is the flat export of all 689, with the `method` column
 so weaker inferences stay visible.
 
 ### Schema (`announcements.sqlite`)
@@ -331,9 +346,11 @@ A snapshot is committed at [`data/announcements.sqlite`](data/announcements.sqli
 this one is expensive to rebuild (tens of thousands of archive requests) and describes a
 past that does not change — so it is worth carrying in the repo.
 
-**It currently covers 250 codes, not the whole market.** The `scanned` table records exactly
-which `(code, year)` pairs it holds, so running `scan` against it resumes rather than
-restarting: it will skip those 250 and crawl the rest. Point `--db` at it to extend it.
+**It currently holds the full-market crawl above** — 29,921 company-years across all 1,840
+codes. The `scanned` table records exactly which `(code, year)` pairs it holds, so running
+`scan` against it resumes rather than restarting: it skips what is already there and crawls
+only the gaps (plus the current year, which is always re-scanned). Point `--db` at it to
+extend it.
 
 Because it is a binary blob, git cannot diff it meaningfully — every scan rewrites the whole
 file. If it starts churning the history, `export` it to CSV and track that instead, which is

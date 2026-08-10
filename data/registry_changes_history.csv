@@ -1,6 +1,5 @@
 code,announced_on,old_registry,new_registry,headline,classification,method,pdf_url
 OVT,2026-08-10,Automic,Boardroom,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20260810/pdf/072l6cxv7fr51s.pdf
-HLS,2026-08-06,MUFG Corporate Markets,MPMS,Change of Share Registry Provider,provider_change,two_brands,https://announcements.asx.com.au/asxpdf/20260806/pdf/072hj1501rg1j0.pdf
 ECS,2026-07-30,Automic,Xcend,Change of Share Registry,provider_change,cease_plus_one,https://announcements.asx.com.au/asxpdf/20260730/pdf/07274j0tczfgf8.pdf
 GHY,2026-07-27,MUFG Corporate Markets,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20260727/pdf/07229ww0w5dp65.pdf
 M79,2026-07-17,Registry Direct,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20260717/pdf/071t3m7qcv7klv.pdf
@@ -77,13 +76,8 @@ MYE,2025-06-06,MUFG Corporate Markets,Computershare,Change of Registry notificat
 ARX,2025-05-30,Boardroom,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250530/pdf/06k8fz748gxpgb.pdf
 MLG,2025-05-30,MUFG Corporate Markets,Computershare,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250530/pdf/06k8lg1mtw0q12.pdf
 AQI,2025-05-16,Automic,Computershare,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250516/pdf/06jtl05k5fnq4c.pdf
-TUA,2025-05-13,MUFG Corporate Markets,MPMS,Change of Share Registry,provider_change,two_brands,https://announcements.asx.com.au/asxpdf/20250513/pdf/06jprkyyh880ly.pdf
 HE8,2025-05-09,Computershare,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250509/pdf/06jlg0qh7bb2dl.pdf
 ABB,2025-05-05,MUFG Corporate Markets,Computershare,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250505/pdf/06jdfv6zrw0kwq.pdf
-SNC,2025-04-16,MPMS,MUFG Corporate Markets,Change of registry address notification,address_only,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20250416/pdf/06ht9s5kv3l4v0.pdf
-EDV,2025-04-14,MUFG Corporate Markets,MPMS,Change of Registry Address,address_only,two_brands,https://announcements.asx.com.au/asxpdf/20250414/pdf/06hq18fggm89q7.pdf
-CBA,2025-04-11,MUFG Corporate Markets,MPMS,Change of registry address,address_only,two_brands,https://announcements.asx.com.au/asxpdf/20250411/pdf/06hn8dbl3dgwds.pdf
-ASX,2025-04-09,MUFG Corporate Markets,MPMS,Change of Registry Address,address_only,two_brands,https://announcements.asx.com.au/asxpdf/20250409/pdf/06hjv6qq1q0wqh.pdf
 NST,2025-04-04,MUFG Corporate Markets,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250404/pdf/06hdp98gqppjr7.pdf
 NHE,2025-03-28,Automic,Computershare,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250328/pdf/06h3cb85qqt5n0.pdf
 PWN,2025-03-28,Automic,Xcend,Change of Share Registry,provider_change,cease_plus_one,https://announcements.asx.com.au/asxpdf/20250328/pdf/06h367wmgr0s39.pdf
@@ -107,7 +101,6 @@ KAI,2025-02-14,Automic,Xcend,Change of Share Registry,provider_change,cease_plus
 GMD,2025-02-05,Computershare,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250205/pdf/06f6wldvv47gk9.pdf
 CT1,2025-01-31,Automic,Computershare,Details of Share Registry address,address_only,from_to,https://announcements.asx.com.au/asxpdf/20250131/pdf/06f1dctqbl5713.pdf
 PGO,2025-01-20,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250120/pdf/06dnptbksy8y94.pdf
-WTC,2025-01-20,MUFG Corporate Markets,MPMS,Change of registry address,address_only,two_brands,https://announcements.asx.com.au/asxpdf/20250120/pdf/06dpdyg4qyvtnk.pdf
 NUZ,2025-01-16,Computershare,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250116/pdf/06dl0nprl5jq8l.pdf
 VAR,2025-01-10,Boardroom,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250110/pdf/06dfj711kwzh7f.pdf
 RAG,2025-01-10,Automic,Computershare,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250110/pdf/06dfpwk72jy45k.pdf
