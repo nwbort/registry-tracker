@@ -241,29 +241,36 @@ canonical names as a 2026 one.
 
 ### How far back it actually works
 
-Two different limits, and they are worth keeping apart:
+Three separate limits, worth keeping apart because they have different fixes:
 
-- **The announcement index** goes back to 1998 and parses cleanly the whole way. So the
-  *date* a company changed registry is recoverable across the full archive.
-- **The PDFs are image-only scans before about 2008**, so there is no text to extract and
-  the outgoing/incoming registrar cannot be read without OCR.
+1. **The announcement index** parses cleanly back to 1998. So the *date* a company changed
+   registry is recoverable across the whole archive, always.
+2. **Before about 2010 the PDFs are image-only scans.** pdfminer returns nothing usable, so
+   the registrars cannot be read without OCR. This is entirely a pre-2010 problem — from
+   2010 onward every PDF in the full-market run yielded text.
+3. **A readable PDF may still name only one registrar.** Plenty of letters say "we have
+   appointed X" without naming who they left. That, not scanning, is what caps the 2010s.
 
-Measured over a 250-code pilot (4,230 company-years):
+Measured over the full market (1,840 codes, 29,921 company-years):
 
-| Era | `provider_change` notices resolved to an old → new pair |
-| --- | --- |
-| before 2005 | 0 / 2 |
-| 2005–2009 | 3 / 9 (33%) |
-| 2010–2014 | 11 / 23 (48%) |
-| 2015–2019 | 19 / 31 (61%) |
-| 2020+ | 55 / 57 (**97%**) |
+| Era | PDFs readable | Resolved to an old → new pair |
+| --- | --- | ---: |
+| before 2005 | 0 / 26 | 0 / 26 |
+| 2005–2009 | 38 / 65 | 21 / 65 (32%) |
+| 2010–2014 | 153 / 153 | 59 / 153 (39%) |
+| 2015–2019 | 209 / 209 | 118 / 209 (56%) |
+| 2020+ | 436 / 436 | 404 / 436 (**93%**) |
 
-So this is close to complete for the last five years and thins out steadily before that.
-Adding OCR would be the way to push further back.
+So OCR would only buy back the pre-2010 rows. The 2010s gap needs something else — the
+prior registrar is often recoverable from the *previous* switch, or from what the daily
+tracker already knows, rather than from the document itself.
 
-Of the pairs that do resolve, 84% come from an explicit "from X to Y" in the text; only a
-handful rest on the weakest `two_brands` fallback. The `method` column is what tells them
-apart — do not treat a `two_brands` row as equal evidence to a `from_to` one.
+Of the 696 pairs that resolve, 526 (76%) come from an explicit "from X to Y" in the text.
+53 rest on the weakest `two_brands` fallback — two registrar names in one document, taken
+in order of appearance. The `method` column keeps them apart; do not treat a `two_brands`
+row as equal evidence to a `from_to` one.
+
+`resolution.ok = 0` means the PDF was an image-only scan, not that parsing failed.
 
 ### Worked example
 
@@ -276,31 +283,43 @@ ECS    2026-07-30  Automic             Xcend          cease_plus_one
 ECS    2023-07-24  Computershare       Automic        from_to
 ```
 
-### Pilot results (250 codes, 4,230 company-years)
+### Full-market results (1,840 codes, 29,921 company-years)
 
-The scan took 3.7 minutes at ~19 requests/sec with no failed fetches, which puts the full
-market at roughly 25 minutes. It found **101 registrar switches across 89 of the 250
-companies** — so better than a third of the market has changed registry at least once in a
-window the daily tracker could never have seen. 88 came from `provider_change` headlines,
-8 from `address_only` and 5 from `registry_other`.
+The whole market scanned in 25.9 minutes at ~17 requests/sec with **zero failed fetches**,
+turning up 2,020 registry-related announcements. All 2,020 PDFs were then fetched; 1,905
+yielded text and 115 were image-only scans, all of them pre-2010.
 
-Net movement over the resolved history, which is the thing the daily tracker cannot show
-you at all:
+**696 registrar switches across 599 of the 1,840 companies** — so roughly one company in
+three has changed registry at least once in a window the daily tracker could never have
+seen. 602 came from `provider_change` headlines, 53 from `address_only` and 41 from
+`registry_other`: the 94 from non-obvious headlines are what the headline-only approach
+would have missed.
+
+Net movement over the resolved history:
 
 | Registrar | Gained | Lost | Net |
 | --- | ---: | ---: | ---: |
-| Automic | 54 | 8 | **+46** |
-| Boardroom | 13 | 8 | +5 |
-| Xcend | 4 | 0 | +4 |
-| Computershare | 11 | 36 | **−25** |
-| MUFG Corporate Markets | 6 | 22 | −16 |
-| Advanced Share Registry | 6 | 19 | −13 |
+| Automic | 357 | 83 | **+274** |
+| Xcend | 45 | 0 | +45 |
+| Boardroom | 75 | 61 | +14 |
+| Computershare | 75 | 188 | **−113** |
+| MUFG Corporate Markets | 31 | 150 | **−119** |
+| Advanced Share Registry | 60 | 144 | −84 |
+| Security Transfer Australia | 24 | 50 | −26 |
 
-Two structural events are visible directly in the dates rather than inferred: a cluster of
-Advanced Share Registry → Automic moves over 29 Feb – 6 Mar 2024, and the Link Market
-Services → MUFG rebrand. Bulk transfers of a registrar's whole book look exactly like many
-individual switches on the same day, so treat same-week clusters as one event, not as
-evidence of companies independently choosing a new provider.
+This is the picture the daily tracker cannot show: a one-way consolidation into Automic,
+with Xcend picking up 45 clients and losing none. Note the direction of travel is not the
+same as market share — Computershare still holds the large caps (55% of ASX market cap in
+the table above) while shedding small-cap mandates by count.
+
+Switches are heavily concentrated in time: **172 in 2024** against 39-71 in surrounding
+years. That spike is not 172 independent decisions — it is dominated by Automic absorbing
+Advanced Share Registry's book over a few days in early March 2024. Bulk transfers of a
+registrar's client list look identical to individual switches in this data, so treat
+same-week clusters as one event.
+
+`data/registry_changes_history.csv` is the flat export of all 696, with the `method` column
+so weaker inferences stay visible.
 
 ### Schema (`announcements.sqlite`)
 

@@ -487,7 +487,11 @@ def extract_pdf_text(blob: bytes) -> str | None:
     # at this volume the warnings drown out the progress output.
     logging.getLogger("pdfminer").setLevel(logging.ERROR)
     try:
-        return extract_text(io.BytesIO(blob))
+        text = extract_text(io.BytesIO(blob))
+        # An image-only scan still yields a page-separator form feed, which is
+        # truthy but carries no text. Treat that as "not extractable" so the
+        # `ok` column distinguishes a scan from a document we actually read.
+        return text if text and text.strip() else None
     except Exception as exc:  # a scanned or malformed PDF should not kill a run
         log.debug("pdf extract failed: %s", exc)
         return None
