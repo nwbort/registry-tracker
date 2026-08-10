@@ -175,6 +175,7 @@ long before this repo existed.
 python announcement_history.py scan --codes ECS,BHP   # index announcements
 python announcement_history.py scan                   # whole market
 python announcement_history.py resolve                # read the candidate PDFs
+python announcement_history.py backfill               # name the side a notice left out
 python announcement_history.py changes                # resolved switches
 python announcement_history.py timeline ECS           # one ticker
 python announcement_history.py export out.csv
@@ -223,6 +224,32 @@ too. On a 60-notice sample, **6.7% of them were real switches** — companies do
 genuine change of provider under "Details of Share Registry address". `--skip-address`
 buys back about 35% of the fetches if that trade is not worth it.
 
+### Headlines that do not say "registry"
+
+Ordering is all the headline decides *once an announcement is indexed*. Whether it is
+indexed at all is a hard gate: an announcement the headline rules do not match is never
+stored, so no PDF is ever opened and the change cannot be recovered later. Two shapes get
+past a plain `registr` match:
+
+- **`transfer agent`** — the North-American name for a registrar. Companies with a second
+  listing in Toronto or New York use it in place of, or alongside, "share registry".
+- **`capital market(s) change/update`** — a company switching registrar on two exchanges at
+  once headlines the notice for the market rather than for the document. AuMEGA Metals
+  (AAM) moved from Automic to Computershare on 8 December 2025 under *"AuMEGA Metals
+  Announces Capital Market Changes"*; the words "registry and transfer agent" appear only
+  in the body, above a clean `From: … To: …` table.
+
+Only the `change`/`update` shape is admitted, not bare "capital markets" — measured over a
+108,618-headline sample of the archive, `capital market` alone matches investor days and
+debt-adviser appointments (`ARR engages BMO Capital Markets as Financial Adviser`), while
+the narrowed pattern and `transfer agent` between them matched nothing that was not a
+registry notice. Every pattern here is paid for one PDF at a time, so one that fires on the
+wrong thing costs real requests.
+
+Because `scanned` records that a company-year was fetched and not what the headline rules
+made of it, widening those rules leaves every already-scanned year holding the old verdict.
+`scan --rescan` re-indexes them.
+
 The PDF sits behind a terms-of-access interstitial: `displayAnnouncement.do?display=pdf&idsId=N`
 returns an HTML page whose hidden `pdfURL` field holds the real
 `announcements.asx.com.au/asxpdf/...` link. Two requests per document. Most of these PDFs
@@ -233,6 +260,16 @@ an explicit `from X to Y`; an `X will cease` paired with an appointment phrase; 
 those plus the only other registrar named in the document; or, failing all that, exactly
 two distinct registrar brands in order of appearance. The `method` column records which
 rule fired, so a `two_brands` guess is never mistaken for a stated `from_to`.
+
+When the document names exactly one registrar, which end of the change it sits on is
+decided by the sentence around it. The default is the incoming one — a company announcing a
+move prints the new registrar's contact details and routinely never says who it left — but
+a `cease` phrase naming that same registrar flips it to the outgoing side (`one_brand_cease`).
+Reading a "X will cease to act as registrar" notice the default way would invert the change.
+
+A stored resolution is otherwise final — the PDF does not change, so re-reading it is a
+wasted request. It stops being final when the extraction rules do:
+`resolve --reresolve one_brand` re-reads the documents an older rule decided.
 
 Historical registrars that no longer appear in the live ASX feed (ASX Perpetual Registrars,
 Registries Limited, Security Transfer, White Outsourcing …) are added on top of
@@ -276,9 +313,8 @@ Measured over the full market (1,840 codes, 29,921 company-years):
 | 2015–2019 | 209 / 209 | 118 / 209 (56%) |
 | 2020+ | 436 / 436 | 402 / 436 (**92%**) |
 
-So OCR would only buy back the pre-2010 rows. The 2010s gap needs something else — the
-prior registrar is often recoverable from the *previous* switch, or from what the daily
-tracker already knows, rather than from the document itself.
+So OCR would only buy back the pre-2010 rows. The 2010s gap is limit 3, and `backfill`
+below is what closes it.
 
 Of the 689 pairs that resolve, 526 (76%) come from an explicit "from X to Y" in the text.
 47 rest on the weakest `two_brands` fallback — two registrar names in one document, taken
@@ -286,6 +322,46 @@ in order of appearance. The `method` column keeps them apart; do not treat a `tw
 row as equal evidence to a `from_to` one.
 
 `resolution.ok = 0` means the PDF was an image-only scan, not that parsing failed.
+
+### Naming the side the notice leaves out (`backfill`)
+
+A change with one end is not a change: `changes` and `export` both require `old_registry`
+and `new_registry`, so a notice that names only where the register went is dropped
+entirely. Siren Gold (SNG) is the shape — its 23 March 2026 notice reads *"the share
+registry of the Company will be transferred to Computershare"*, gives Computershare's Perth
+address, and never mentions Automic at all.
+
+The missing half is usually written down elsewhere in the same company's announcement
+stream. Documents that a registry produces, or that have to print its address for
+shareholders to act on, name whoever held the register on the day they were lodged — proxy
+forms, notices of meeting, letters to shareholders, DRP notices, annual reports. So
+`backfill` reads the outgoing registrar out of the newest such document lodged *before* the
+notice, and the incoming one out of the oldest lodged well after it. For SNG that is the
+proxy form of 16 September 2025, which names Automic, and the change becomes
+`Automic → Computershare`.
+
+Three properties are worth keeping in mind:
+
+- **It is evidence, not inference.** If the probed document names the *same* registrar the
+  notice does, the register did not move and nothing is written. That is what should happen
+  to the address notices that reach `provider_change` on a headline typo — `Change of
+  Registry **Addresss** Notification` misses the `\baddress\b` filter — so those cost a
+  request and produce no false switch.
+- **A document naming two registrars is skipped**, not guessed at. Dual-listed companies
+  print both their Australian and their overseas registrar.
+- **The incoming side is only read 45 days out.** A switch is announced before it takes
+  effect ("effective Monday, 30 March"), so a document lodged days after the notice may
+  still have come from the outgoing registrar.
+
+`address_only` notices are excluded by default: they are one-sided for the honest reason —
+the registrar moved office, so there was only ever one to name — and pairing each with
+whatever came before would manufacture a change out of a non-event. `--include-other` opens
+the `registry_other` bucket as well.
+
+Probed documents are recorded in a `probe` table so a second run does not re-fetch them,
+and the `method` column carries the provenance: `one_brand+prior_doc` means the incoming
+registrar was stated in the notice and the outgoing one came from another filing, whose
+`ids_id` is in `resolution.backfilled_from`.
 
 ### Worked example
 
@@ -381,10 +457,24 @@ does not re-fetch, and so a failed extraction is recorded rather than retried fo
 | `pdf_url` | resolved `announcements.asx.com.au` link |
 | `old_registry` | outgoing registrar, canonical, NULL if not determined |
 | `new_registry` | incoming registrar, canonical, NULL if not determined |
-| `method` | which rule fired — `from_to` is strongest, `two_brands` weakest |
+| `method` | which rule fired — `from_to` is strongest, `two_brands` weakest; a `+prior_doc` / `+next_doc` suffix means `backfill` supplied that side |
 | `brands` | every registrar named in the document, comma separated |
 | `resolved_at` | when the PDF was read |
 | `ok` | 1 if text was extractable — 0 means an image-only scan |
+| `backfilled_from` | `ids_id` of the unrelated announcement a missing side was read out of, NULL if both sides came from the notice |
+
+`probe` — documents `backfill` opened only to see which registrar they name. They say
+nothing about a registry change, so they have no place in `announcement`; the table exists
+so a second backfill run does not re-fetch them.
+
+| Column | Meaning |
+| --- | --- |
+| `ids_id` | ASX announcement id (PK) |
+| `code`, `date`, `headline` | what was opened |
+| `pdf_url` | resolved `announcements.asx.com.au` link |
+| `brands` | every registrar named, comma separated — exactly one is what makes it usable |
+| `probed_at` | when it was read |
+| `ok` | 1 if text was extractable |
 
 `scanned` — one row per `(code, year)` fetched, so an interrupted crawl resumes and a year
 with genuinely no announcements is distinguishable from one never scanned.

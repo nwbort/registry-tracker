@@ -24,11 +24,18 @@ Share Registry Address" is a registrar moving office - the provider is unchanged
 and those outnumber real provider switches roughly three to one. Only the PDF body
 names the outgoing and incoming registrar, so `resolve` fetches it and extracts them.
 
+Plenty of notices name only the registrar the company is moving to. That leaves a
+change with one end, which is no change at all as far as `changes` is concerned,
+so `backfill` goes looking for the other end in the company's other filings - a
+proxy form or annual report lodged either side of the notice prints whoever held
+the register at the time.
+
 Usage:
     python announcement_history.py scan --codes ECS,BHP   # index announcements
     python announcement_history.py scan --limit 50        # sample of the market
     python announcement_history.py scan                   # whole market (~30k requests)
     python announcement_history.py resolve                # read candidate PDFs
+    python announcement_history.py backfill               # name the unnamed side
     python announcement_history.py changes                # resolved registrar switches
     python announcement_history.py timeline ECS           # one ticker's history
     python announcement_history.py export out.csv
@@ -48,7 +55,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import requests
@@ -80,11 +87,27 @@ log = logging.getLogger("announcement_history")
 # Headline classification
 # --------------------------------------------------------------------------
 
+# The noun for the thing that changes. "Transfer agent" is the North-American
+# name for a registrar, and companies with a second listing in Toronto or New
+# York use it in place of - or alongside - "share registry".
+_REGISTRY_NOUN = r"(?:share\s*)?registr(?:y|ies|ars?)\b|transfer\s+agents?\b"
+
 # Anything matching this is about a share registry in some way. Deliberately
 # broad - narrowing happens below, and a headline we never look at is a change
 # we can never find.
+#
+# The last alternative is the one that does not name a registry at all. A
+# company that is switching registrar on two exchanges at once tends to headline
+# the notice for the market rather than for the document: AuMEGA Metals (AAM)
+# moved from Automic to Computershare on 8 Dec 2025 under "AuMEGA Metals
+# Announces Capital Market Changes", with "registry and transfer agent" appearing
+# only in the body. Only the "<capital market(s)> change/update" shape is
+# admitted, not "capital markets" on its own - that phrase is otherwise all
+# investor days and debt raisings, and this net is paid for one PDF at a time.
 _REGISTRY_HEADLINE = re.compile(
-    r"(share\s*)?registr(?:y|ies|ars?)\b|registry\s*services", re.I
+    rf"{_REGISTRY_NOUN}|registry\s*services|"
+    r"capital\s+market\w*\s+(?:change|update)",
+    re.I,
 )
 
 # Headlines that merely *contain* a registry word but are about something else.
@@ -107,15 +130,15 @@ _ADDRESS_ONLY = re.compile(
 
 # Strong positives for an actual change of provider.
 _PROVIDER_CHANGE = re.compile(
-    r"change\s+(?:of|in)\s+(?:the\s+)?(?:share\s+)?registr(?:y|ies|ars?)|"
-    r"(?:new|appointment\s+of|transfer\s+of)\s+(?:a\s+)?(?:share\s+)?registr(?:y|ies|ars?)|"
+    rf"change\s+(?:of|in)\s+(?:the\s+)?(?:{_REGISTRY_NOUN})|"
+    rf"(?:new|appointment\s+of|transfer\s+of)\s+(?:a\s+)?(?:{_REGISTRY_NOUN})|"
     r"registr(?:y|ies|ars?)\s+(?:change|transfer|appointment)|"
     r"share\s+registry\s+(?:service\s+)?provider|"
     # "<Company> reappoints X as registrars" - the appointment verb and the
     # registry word sit either side of the incoming registrar's name.
     r"\bre-?appoints?\b|"
-    r"\bappoints?\b.{0,60}?\bregistr(?:y|ies|ars?)\b|"
-    r"\bregistr(?:y|ies|ars?)\b.{0,60}?\bappoint",
+    rf"\bappoints?\b.{{0,60}}?(?:{_REGISTRY_NOUN})|"
+    rf"(?:{_REGISTRY_NOUN}).{{0,60}}?\bappoint",
     re.I,
 )
 
@@ -276,6 +299,10 @@ def resolve_registrars(text: str) -> Resolution:
          whichever other brand the document mentions
       3. an appointment phrase naming the incoming registrar
       4. exactly two distinct brands in the document, taken in order of appearance
+      5. a single brand, placed on whichever side the surrounding phrasing puts it
+
+    Rule 5 leaves the other side NULL, which is not a change `changes` can use -
+    `backfill` is what fills it in, from documents outside the notice.
     """
     flat = " ".join(text.split())
     brands = []
@@ -316,9 +343,68 @@ def resolve_registrars(text: str) -> Resolution:
     if len(brands) == 2:
         return Resolution(old=brands[0], new=brands[1], method="two_brands", brands=brands)
     if len(brands) == 1:
-        res.new = brands[0]
-        res.method = "one_brand"
+        # One registrar named and nothing to pair it with. Which side of the
+        # change it sits on is whatever the surrounding sentence says. Treating
+        # it as the incoming one is right far more often - a company announcing
+        # a move prints the new registrar's contact details and never says who
+        # it left, which is the shape of Siren Gold's 23 Mar 2026 notice ("the
+        # share registry of the Company will be transferred to Computershare",
+        # and Automic is not mentioned at all) - but reading a "X will cease to
+        # act as registrar" notice that way inverts the change, so a cease
+        # phrase naming the only brand wins.
+        if old_guess == brands[0] and new_guess is None:
+            res.old = brands[0]
+            res.method = "one_brand_cease"
+        else:
+            res.new = brands[0]
+            res.method = "one_brand"
     return res
+
+
+# --------------------------------------------------------------------------
+# Recovering the side a notice does not name
+# --------------------------------------------------------------------------
+
+# A one-sided notice names the registrar the company is moving to (or, rarely,
+# the one it is leaving) and stops there, which leaves `resolve` with half a
+# change and `changes` - which needs both ends - with none. The missing half is
+# almost always written down somewhere else in the same company's announcement
+# stream: routine documents that are produced *by* the registry, or that have to
+# print its address for shareholders to act on, name whoever held the register
+# on the day they were lodged.
+#
+# So the outgoing registrar is read out of the newest such document lodged
+# before the notice, and the incoming one out of the oldest lodged well after
+# it. This is evidence, not inference: if the document names the same registrar
+# the notice does, then the register did not move and nothing is written - which
+# is exactly what should happen for the address notices that slip into
+# CLASS_PROVIDER on a headline typo ("Change of Registry Addresss").
+_CORROBORATING = re.compile(
+    r"proxy\s+form|notice\s+of\s+(?:annual\s+general|general|extraordinary)\s+meeting|"
+    r"letter\s+to\s+(?:share|unit|security)\s*holders|"
+    r"(?:dividend|distribution)\s+reinvestment|"
+    r"annual\s+report",
+    re.I,
+)
+
+# An announcement whose headline says it is about the registry is not
+# independent evidence of who the registry was - it is the notice itself, or its
+# corrections and reminders.
+_NOT_CORROBORATING = _REGISTRY_HEADLINE
+
+# A switch is announced before it takes effect ("effective Monday, 30 March"),
+# so a document lodged in the days after the notice can still have been produced
+# by the outgoing registrar. Nothing inside this window is read as evidence of
+# the incoming one.
+_EFFECTIVE_LAG_DAYS = 45
+
+
+def corroborating(headline: str) -> bool:
+    """Would this announcement be expected to name the company's registrar?"""
+    if not headline:
+        return False
+    text = " ".join(headline.split())
+    return bool(_CORROBORATING.search(text) and not _NOT_CORROBORATING.search(text))
 
 
 # --------------------------------------------------------------------------
@@ -557,8 +643,27 @@ CREATE TABLE IF NOT EXISTS resolution (
     method        TEXT,
     brands        TEXT,
     resolved_at   TEXT NOT NULL,
-    ok            INTEGER NOT NULL
+    ok            INTEGER NOT NULL,
+    -- ids_id of the unrelated announcement the missing side was read out of,
+    -- when `backfill` supplied it. NULL means both sides came from the notice.
+    backfilled_from TEXT
 );
+
+-- Documents opened by `backfill` only to see which registrar they name. These
+-- are ordinary announcements (proxy forms, annual reports) that say nothing
+-- about a registry change, so they have no place in `announcement`; the table
+-- exists so a second backfill run does not re-fetch them.
+CREATE TABLE IF NOT EXISTS probe (
+    ids_id     TEXT PRIMARY KEY,
+    code       TEXT NOT NULL,
+    date       TEXT NOT NULL,
+    headline   TEXT,
+    pdf_url    TEXT,
+    brands     TEXT,
+    probed_at  TEXT NOT NULL,
+    ok         INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_probe_code ON probe(code, date);
 """
 
 
@@ -572,6 +677,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
     have = {row["name"] for row in conn.execute("PRAGMA table_info(announcement)")}
     if "price_sensitive" not in have:
         conn.execute("ALTER TABLE announcement ADD COLUMN price_sensitive INTEGER")
+        conn.commit()
+    have = {row["name"] for row in conn.execute("PRAGMA table_info(resolution)")}
+    if "backfilled_from" not in have:
+        conn.execute("ALTER TABLE resolution ADD COLUMN backfilled_from TEXT")
         conn.commit()
 
 
@@ -644,6 +753,11 @@ def cmd_scan(args: argparse.Namespace) -> int:
     targets = _load_codes(args)
     this_year = date.today().year
     done = {(r["code"], r["year"]) for r in conn.execute("SELECT code, year FROM scanned")}
+    if args.rescan:
+        # `scanned` records that a company-year was fetched, not what
+        # classify_headline made of it, so widening the headline net leaves
+        # every already-scanned year holding the old verdict. Re-index them.
+        done = set()
 
     jobs: list[tuple[str, int]] = []
     for code, first in targets:
@@ -722,14 +836,25 @@ def cmd_resolve(args: argparse.Namespace) -> int:
     if not args.skip_address:
         wanted.append(CLASS_ADDRESS)
     placeholders = ",".join("?" * len(wanted))
+    params = list(wanted)
+    # A stored resolution is normally final - the PDF does not change, so
+    # re-reading it is a wasted request. It stops being final when the
+    # extraction rules do: --reresolve re-reads the documents an old rule
+    # decided, and since the row is rewritten from scratch, any side `backfill`
+    # had supplied for it goes too and has to be earned again.
+    redo = ""
+    if args.reresolve:
+        redo = " OR r.method = ?"
+        params.append(args.reresolve)
     sql = (
         f"SELECT a.* FROM announcement a "
         f"LEFT JOIN resolution r ON r.ids_id = a.ids_id "
-        f"WHERE a.classification IN ({placeholders}) AND r.ids_id IS NULL "
+        f"WHERE a.classification IN ({placeholders}) "
+        f"AND (r.ids_id IS NULL{redo}) "
         f"ORDER BY CASE a.classification WHEN '{CLASS_PROVIDER}' THEN 0 "
         f"WHEN '{CLASS_OTHER}' THEN 1 ELSE 2 END, a.date DESC"
     )
-    rows = list(conn.execute(sql, wanted))
+    rows = list(conn.execute(sql, params))
     if args.limit:
         rows = rows[: args.limit]
     if not rows:
@@ -768,6 +893,157 @@ def cmd_resolve(args: argparse.Namespace) -> int:
                 print(f"  {i}/{len(rows)}  {rate:.1f}/s", file=sys.stderr)
     conn.commit()
     print(f"resolved {ok}/{len(rows)} PDFs", file=sys.stderr)
+    for what, err in client.errors[:10]:
+        print(f"  error: {what}: {err}", file=sys.stderr)
+    return cmd_changes(args)
+
+
+# A notice that named only one registrar. `method` is not tested: what makes a
+# row half-resolved is that one column is filled and the other is not, however
+# the resolver got there.
+_ONE_SIDED_SQL = """
+SELECT a.code, a.date, a.headline, a.classification,
+       r.ids_id, r.old_registry, r.new_registry, r.method
+FROM announcement a
+JOIN resolution r ON r.ids_id = a.ids_id
+WHERE r.ok = 1 AND r.backfilled_from IS NULL
+  AND (r.old_registry IS NULL) <> (r.new_registry IS NULL)
+  AND a.classification IN ({placeholders})
+ORDER BY a.date DESC
+"""
+
+
+def _probe_pdf(
+    client: AsxArchiveClient, conn: sqlite3.Connection, ann: Announcement, now: str
+) -> list[str]:
+    """Registrars named by one announcement, reading a cached probe if there is one."""
+    cached = conn.execute(
+        "SELECT brands, ok FROM probe WHERE ids_id = ?", (ann.ids_id,)
+    ).fetchone()
+    if cached is not None:
+        return [b for b in (cached["brands"] or "").split(",") if b]
+
+    url, text = client.pdf_text(ann.ids_id)
+    brands: list[str] = []
+    for _, name in _find_brands(" ".join((text or "").split())):
+        if name not in brands:
+            brands.append(name)
+    conn.execute(
+        "INSERT OR REPLACE INTO probe "
+        "(ids_id, code, date, headline, pdf_url, brands, probed_at, ok) "
+        "VALUES (?,?,?,?,?,?,?,?)",
+        (ann.ids_id, ann.code, ann.date, ann.headline, url,
+         ",".join(brands), now, 1 if text else 0),
+    )
+    return brands
+
+
+def _candidate_documents(
+    client: AsxArchiveClient, code: str, on_date: str, before: bool
+) -> list[Announcement]:
+    """Corroborating announcements on one side of `on_date`, nearest to it first.
+
+    Only the announcement's own year and the neighbouring one on that side are
+    indexed. A company lodges an annual report and a notice of meeting every
+    year, so two years is already generous, and each extra year is a request
+    spent on a company that is unlikely to have a proxy form hiding in it.
+    """
+    year = int(on_date[:4])
+    years = (year - 1, year) if before else (year, year + 1)
+    cutoff = on_date
+    if not before:
+        cutoff = (
+            date.fromisoformat(on_date) + timedelta(days=_EFFECTIVE_LAG_DAYS)
+        ).isoformat()
+
+    out: list[Announcement] = []
+    for y in years:
+        if y > date.today().year:
+            continue
+        for a in client.index(code, y) or []:
+            if (a.date < cutoff) != before:
+                continue
+            if corroborating(a.headline):
+                out.append(a)
+    out.sort(key=lambda a: a.date, reverse=before)
+    return out
+
+
+def cmd_backfill(args: argparse.Namespace) -> int:
+    conn = connect(args.db)
+    # Address notices are excluded by default. They are one-sided for the honest
+    # reason - the registrar moved office, so there is only ever one to name -
+    # and probing them would pair each with whatever the register looked like
+    # before, turning a non-event into a change.
+    wanted = [CLASS_PROVIDER]
+    if args.include_other:
+        wanted.append(CLASS_OTHER)
+    placeholders = ",".join("?" * len(wanted))
+    rows = list(conn.execute(_ONE_SIDED_SQL.format(placeholders=placeholders), wanted))
+    if args.limit:
+        rows = rows[: args.limit]
+    if not rows:
+        print("nothing to backfill")
+        return 0
+
+    print(
+        f"backfilling {len(rows)} one-sided notices "
+        f"(up to {args.probes} documents each)",
+        file=sys.stderr,
+    )
+    client = AsxArchiveClient(workers=args.workers, delay=args.delay)
+    now = datetime.now().isoformat(timespec="seconds")
+    filled = unchanged = exhausted = 0
+
+    def work(row: sqlite3.Row):
+        before = row["old_registry"] is None
+        known = row["new_registry"] if before else row["old_registry"]
+        cands = _candidate_documents(client, row["code"], row["date"], before)
+        return row, before, known, cands[: args.probes]
+
+    with ThreadPoolExecutor(max_workers=args.workers) as pool:
+        for i, (row, before, known, cands) in enumerate(pool.map(work, rows), 1):
+            found = None
+            source = None
+            same = False
+            for ann in cands:
+                brands = _probe_pdf(client, conn, ann, now)
+                if len(brands) != 1:
+                    # Nothing, or a document that names two registrars and so
+                    # cannot say which one held the register.
+                    continue
+                if brands[0] == known:
+                    # The register did not move: this was not a switch.
+                    same = True
+                    break
+                found, source = brands[0], ann.ids_id
+                break
+
+            if found:
+                column = "old_registry" if before else "new_registry"
+                conn.execute(
+                    f"UPDATE resolution SET {column} = ?, method = ?, "
+                    f"backfilled_from = ? WHERE ids_id = ?",
+                    (found, f"{row['method']}+{'prior' if before else 'next'}_doc",
+                     source, row["ids_id"]),
+                )
+                filled += 1
+                if args.verbose:
+                    a, b = (found, known) if before else (known, found)
+                    print(f"  {row['code']} {row['date']}: {a} => {b}", file=sys.stderr)
+            elif same:
+                unchanged += 1
+            else:
+                exhausted += 1
+            if i % 25 == 0:
+                conn.commit()
+                print(f"  {i}/{len(rows)}", file=sys.stderr)
+    conn.commit()
+    print(
+        f"backfilled {filled} of {len(rows)}; {unchanged} showed the same "
+        f"registrar either side (no change); {exhausted} found no evidence",
+        file=sys.stderr,
+    )
     for what, err in client.errors[:10]:
         print(f"  error: {what}: {err}", file=sys.stderr)
     return cmd_changes(args)
@@ -861,6 +1137,16 @@ def cmd_status(args: argparse.Namespace) -> int:
         f"\nPDFs read: {res['n'] or 0} ({res['ok'] or 0} extracted); "
         f"{res['pairs'] or 0} with both old and new registrar"
     )
+    bf = conn.execute(
+        "SELECT COUNT(*) n, SUM(backfilled_from IS NOT NULL) done, "
+        "SUM(ok = 1 AND (old_registry IS NULL) <> (new_registry IS NULL)) half "
+        "FROM resolution"
+    ).fetchone()
+    probes = conn.execute("SELECT COUNT(*) n FROM probe").fetchone()
+    print(
+        f"one-sided notices still missing a side: {bf['half'] or 0}; "
+        f"{bf['done'] or 0} completed by backfill from {probes['n'] or 0} probed documents"
+    )
     return 0
 
 
@@ -876,6 +1162,9 @@ def build_parser() -> argparse.ArgumentParser:
                    help="CSV of codes to scan (default: the tracker's export)")
     s.add_argument("--limit", type=int, help="only the first N codes")
     s.add_argument("--since", type=int, help=f"earliest year (default {FIRST_YEAR} or listing)")
+    s.add_argument("--rescan", action="store_true",
+                   help="re-index company-years already scanned; needed after the "
+                        "headline rules change, since a stored scan keeps the old verdict")
     s.add_argument("--workers", type=int, default=8)
     s.add_argument("--delay", type=float, default=0.08)
     s.set_defaults(func=cmd_scan)
@@ -885,9 +1174,25 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--skip-address", action="store_true",
                    help="do not open address-change notices (~35%% fewer fetches, "
                         "but misses the ~7%% of them that are real switches)")
+    s.add_argument("--reresolve", metavar="METHOD",
+                   help="also re-read PDFs whose stored resolution used METHOD "
+                        "(e.g. one_brand), after a change to the extraction rules")
     s.add_argument("--workers", type=int, default=6)
     s.add_argument("--delay", type=float, default=0.12)
     s.set_defaults(func=cmd_resolve)
+
+    s = sub.add_parser(
+        "backfill",
+        help="name the missing side of a one-sided notice from other announcements",
+    )
+    s.add_argument("--limit", type=int)
+    s.add_argument("--probes", type=int, default=3,
+                   help="documents to open per notice before giving up (default 3)")
+    s.add_argument("--include-other", action="store_true",
+                   help=f"also backfill {CLASS_OTHER} notices, not just {CLASS_PROVIDER}")
+    s.add_argument("--workers", type=int, default=6)
+    s.add_argument("--delay", type=float, default=0.12)
+    s.set_defaults(func=cmd_backfill)
 
     s = sub.add_parser("changes", help="resolved registrar switches")
     s.add_argument("--limit", type=int)
