@@ -1,5 +1,6 @@
 # Binary and rebuildable - carried between CI runs via cache/artifact, not git.
 registry.sqlite
+announcements.sqlite
 *.sqlite-journal
 
 __pycache__/
