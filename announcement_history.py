@@ -196,13 +196,34 @@ _REGISTRAR_ANY = re.compile(
     re.I,
 )
 
+# Two names for one company, collapsed to one brand. MPMS is MUFG Pension &
+# Market Services - the group MUFG Corporate Markets (itself the renamed Link
+# Market Services) was rebranded to. Do NOT split these back apart: the token
+# hardly ever arrives as a company name, it arrives inside the letterhead
+# domain, which every MUFG notice carries:
+#     https://au.investorcentre.mpms.mufg.com
+#     support@cm.mpms.mufg.com
+# So a routine "we have moved to MUFG" letter names both spellings, and treating
+# them as two registrars makes the resolver read a rebrand as a company changing
+# provider - in whichever direction the two names happen to fall in the text.
+# That produced seven false switches before this alias existed.
+#
+# The alias has to live here rather than in registry_tracker._CANONICAL_PATTERNS,
+# which still maps /\bmpms\b/ to a distinct "MPMS" brand: that pattern also
+# matches "mps market" and "market place", which need not be MUFG at all, and
+# the daily tracker's change alerts key off those names.
+_BRAND_ALIASES: dict[str, str] = {
+    "MPMS": "MUFG Corporate Markets",
+}
+
 
 def _brand(text: str) -> str | None:
     """Canonical registrar name for a matched fragment, or None.
 
     Defunct registrars are resolved from the local table; everything else is
     handed to registry_tracker.canonical_registry so the names line up with what
-    the daily tracker writes.
+    the daily tracker writes, then run through _BRAND_ALIASES so two names for
+    the same company do not look like two registrars.
     """
     lowered = text.lower()
     for pattern, name in _HISTORICAL_REGISTRARS:
@@ -210,7 +231,8 @@ def _brand(text: str) -> str | None:
             return name
     for pattern in _MODERN_REGISTRAR_PATTERNS:
         if re.search(pattern, lowered):
-            return canonical_registry(text)
+            name = canonical_registry(text)
+            return _BRAND_ALIASES.get(name, name)
     return None
 
 
