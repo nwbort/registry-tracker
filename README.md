@@ -307,6 +307,19 @@ evidence of companies independently choosing a new provider.
 Separate database from `registry.sqlite` — the daily tracker's state is unaffected by
 running this.
 
+A snapshot is committed at [`data/announcements.sqlite`](data/announcements.sqlite). Unlike
+`registry.sqlite`, which is rebuildable from a single day's scrape and so is gitignored,
+this one is expensive to rebuild (tens of thousands of archive requests) and describes a
+past that does not change — so it is worth carrying in the repo.
+
+**It currently covers 250 codes, not the whole market.** The `scanned` table records exactly
+which `(code, year)` pairs it holds, so running `scan` against it resumes rather than
+restarting: it will skip those 250 and crawl the rest. Point `--db` at it to extend it.
+
+Because it is a binary blob, git cannot diff it meaningfully — every scan rewrites the whole
+file. If it starts churning the history, `export` it to CSV and track that instead, which is
+the pattern `data/asx_registries.csv` already follows.
+
 `announcement` — one row per registry-related announcement found. Headlines that are not
 about a share registry are discarded at parse time and never stored.
 
