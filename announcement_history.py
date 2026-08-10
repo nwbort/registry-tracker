@@ -116,7 +116,15 @@ _REGISTRY_HEADLINE = re.compile(
 _NOT_REGISTRY = re.compile(
     r"registration|registered\s+office|register\s+of\s+members|"
     r"substantial\s+holder|form\s+s-\d|prospectus|"
-    r"registry\s+business|sale\s+of\s+registr|registry\s+sale",
+    r"registry\s+business|sale\s+of\s+registr|registry\s+sale|"
+    # One registrar buying another. Same reason as the sale patterns above: this
+    # is the registry industry talking about itself, not a company changing its
+    # own register, and it is lodged under the *registrar's* ticker - "CPU:
+    # Computershare acquires US Transfer Agent". Left in, it reads as three
+    # registry changes at Computershare, and `backfill --include-other` would
+    # go looking for a registrar to pair each one with.
+    rf"acquir\w+\s+(?:\w+\s+){{0,3}}?(?:{_REGISTRY_NOUN})|"
+    rf"(?:{_REGISTRY_NOUN})\s+acquisition",
     re.I,
 )
 

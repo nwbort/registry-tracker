@@ -246,9 +246,18 @@ the narrowed pattern and `transfer agent` between them matched nothing that was 
 registry notice. Every pattern here is paid for one PDF at a time, so one that fires on the
 wrong thing costs real requests.
 
+Widening the net also pulls in one thing that has to be pushed back out: **a registrar
+buying another registrar**. `Computershare acquires US Transfer Agent` is lodged under
+Computershare's own ticker, and left in it reads as three registry changes at CPU. That is
+the same case as the `sale of registry business` patterns `_NOT_REGISTRY` already carried
+for the 2005 ASX/Perpetual sale, so acquisitions join them there — otherwise
+`backfill --include-other` would go looking for a registrar to pair each one with.
+
 Because `scanned` records that a company-year was fetched and not what the headline rules
 made of it, widening those rules leaves every already-scanned year holding the old verdict.
-`scan --rescan` re-indexes them.
+`scan --rescan` re-indexes them. Note it can only *add* — `INSERT OR REPLACE` never deletes,
+so announcements a newly **narrowed** rule rejects have to be removed from the table
+explicitly.
 
 The PDF sits behind a terms-of-access interstitial: `displayAnnouncement.do?display=pdf&idsId=N`
 returns an HTML page whose hidden `pdfURL` field holds the real
@@ -303,23 +312,27 @@ Three separate limits, worth keeping apart because they have different fixes:
 3. **A readable PDF may still name only one registrar.** Plenty of letters say "we have
    appointed X" without naming who they left. That, not scanning, is what caps the 2010s.
 
-Measured over the full market (1,840 codes, 29,921 company-years):
+Measured over the full market (1,840 codes, 29,921 company-years), across the
+`provider_change` notices:
 
-| Era | PDFs readable | Resolved to an old → new pair |
-| --- | --- | ---: |
-| before 2005 | 0 / 26 | 0 / 26 |
-| 2005–2009 | 38 / 65 | 21 / 65 (32%) |
-| 2010–2014 | 153 / 153 | 59 / 153 (39%) |
-| 2015–2019 | 209 / 209 | 118 / 209 (56%) |
-| 2020+ | 436 / 436 | 402 / 436 (**92%**) |
+| Era | PDFs readable | Pair from the notice alone | Pair after `backfill` |
+| --- | --- | ---: | ---: |
+| before 2005 | 0 / 26 | 0 / 26 | 0 / 26 |
+| 2005–2009 | 38 / 65 | 21 / 65 (32%) | 23 / 65 (35%) |
+| 2010–2014 | 153 / 153 | 59 / 153 (39%) | 85 / 153 (**56%**) |
+| 2015–2019 | 209 / 209 | 118 / 209 (56%) | 158 / 209 (**76%**) |
+| 2020+ | 436 / 436 | 402 / 436 (92%) | 418 / 436 (**96%**) |
 
-So OCR would only buy back the pre-2010 rows. The 2010s gap is limit 3, and `backfill`
-below is what closes it.
+So OCR would only buy back the pre-2010 rows — and limit 3, the one that caps the 2010s, is
+what `backfill` below is for: it lifts 2010–2014 from 39% to 56% and 2015–2019 from 56% to
+76%. It does nothing for 2005–2009, because the documents it would probe are the same
+image-only scans.
 
-Of the 689 pairs that resolve, 526 (76%) come from an explicit "from X to Y" in the text.
-47 rest on the weakest `two_brands` fallback — two registrar names in one document, taken
-in order of appearance. The `method` column keeps them apart; do not treat a `two_brands`
-row as equal evidence to a `from_to` one.
+Of the 774 pairs that resolve, 527 (68%) come from an explicit "from X to Y" in the text
+and 84 (11%) needed `backfill` for one of their two ends. 47 rest on the weakest
+`two_brands` fallback — two registrar names in one document, taken in order of appearance.
+The `method` column keeps all of these apart; do not treat a `two_brands` row as equal
+evidence to a `from_to` one.
 
 `resolution.ok = 0` means the PDF was an image-only scan, not that parsing failed.
 
@@ -363,6 +376,11 @@ and the `method` column carries the provenance: `one_brand+prior_doc` means the 
 registrar was stated in the notice and the outgoing one came from another filing, whose
 `ids_id` is in `resolution.backfilled_from`.
 
+Over the full market this recovered **84 of 211** one-sided `provider_change` notices from
+199 probed documents — a little over two probes per recovered change. Notices of meeting
+and proxy forms supplied 46 of them and annual reports 35, which is why those two shapes
+lead the pattern; the remaining 3 came from DRP notices and shareholder letters.
+
 ### Worked example
 
 ECS Botanics is the case this was built from — its 30 July 2026 notice was the prompt. The
@@ -376,40 +394,47 @@ ECS    2023-07-24  Computershare       Automic        from_to
 
 ### Full-market results (1,840 codes, 29,921 company-years)
 
-The whole market scanned in 25.9 minutes at ~17 requests/sec with **zero failed fetches**,
+The whole market scanned in 40.4 minutes at 12.3 requests/sec with **zero failed fetches**,
 turning up 2,020 registry-related announcements. All 2,020 PDFs were then fetched; 1,905
-yielded text and 115 were image-only scans, all of them pre-2010.
+yielded text and 115 were image-only scans, the latest of them from June 2007. `backfill`
+then opened a further 199 ordinary filings to name the side 211 one-sided notices left out.
 
-**689 registrar switches across 592 of the 1,840 companies** — so roughly one company in
+**774 registrar switches across 646 of the 1,840 companies** — so roughly one company in
 three has changed registry at least once in a window the daily tracker could never have
-seen. 600 came from `provider_change` headlines, 48 from `address_only` and 41 from
-`registry_other`: the 89 from non-obvious headlines are what the headline-only approach
+seen. 684 came from `provider_change` headlines, 48 from `address_only` and 42 from
+`registry_other`: the 90 from non-obvious headlines are what the headline-only approach
 would have missed.
 
 Net movement over the resolved history:
 
 | Registrar | Gained | Lost | Net |
 | --- | ---: | ---: | ---: |
-| Automic | 357 | 83 | **+274** |
+| Automic | 381 | 87 | **+294** |
 | Xcend | 45 | 0 | +45 |
-| Boardroom | 75 | 61 | +14 |
-| Computershare | 75 | 188 | **−113** |
-| MUFG Corporate Markets | 30 | 144 | **−114** |
-| Advanced Share Registry | 60 | 144 | −84 |
-| Security Transfer Australia | 24 | 50 | −26 |
+| Registries Limited | 13 | 8 | +5 |
+| Boardroom | 78 | 75 | +3 |
+| Security Transfer Australia | 28 | 69 | −41 |
+| MUFG Corporate Markets | 59 | 148 | **−89** |
+| Advanced Share Registry | 66 | 158 | **−92** |
+| Computershare | 92 | 214 | **−122** |
 
 This is the picture the daily tracker cannot show: a one-way consolidation into Automic,
 with Xcend picking up 45 clients and losing none. Note the direction of travel is not the
 same as market share — Computershare still holds the large caps (55% of ASX market cap in
-the table above) while shedding small-cap mandates by count.
+the table above) while shedding small-cap mandates by count. The 84 backfilled rows sharpen
+this rather than redirect it — 66 of them are 2010s switches, leaving mostly Computershare
+(26) and Security Transfer (19) and arriving mostly at MUFG Corporate Markets (29) and
+Automic (24). MUFG is where they change the picture most: its `Gained` column nearly
+doubles, 30 → 59, so the pre-Automic decade of consolidation into what was then Link
+Market Services is largely invisible without them.
 
-Switches are heavily concentrated in time: **172 in 2024** against 39-65 in surrounding
-years. That spike is not 172 independent decisions — it is dominated by Automic absorbing
+Switches are heavily concentrated in time: **174 in 2024** against 30-66 in surrounding
+years. That spike is not 174 independent decisions — it is dominated by Automic absorbing
 Advanced Share Registry's book over a few days in early March 2024. Bulk transfers of a
 registrar's client list look identical to individual switches in this data, so treat
 same-week clusters as one event.
 
-`data/registry_changes_history.csv` is the flat export of all 689, with the `method` column
+`data/registry_changes_history.csv` is the flat export of all 774, with the `method` column
 so weaker inferences stay visible.
 
 ### Schema (`announcements.sqlite`)
