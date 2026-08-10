@@ -218,6 +218,11 @@ Address notices outnumber real switches roughly three to one, and they arrive in
 when one registrar relocates, every client lodges on the same day. Only the PDF body names
 the outgoing and incoming registrar, so `resolve` fetches it.
 
+The headline therefore decides *ordering*, not eligibility: `resolve` opens address notices
+too. On a 60-notice sample, **6.7% of them were real switches** — companies do lodge a
+genuine change of provider under "Details of Share Registry address". `--skip-address`
+buys back about 35% of the fetches if that trade is not worth it.
+
 The PDF sits behind a terms-of-access interstitial: `displayAnnouncement.do?display=pdf&idsId=N`
 returns an HTML page whose hidden `pdfURL` field holds the real
 `announcements.asx.com.au/asxpdf/...` link. Two requests per document. Most of these PDFs
@@ -234,6 +239,32 @@ Registries Limited, Security Transfer, White Outsourcing …) are added on top o
 `registry_tracker.canonical_registry`, so a 2004 announcement resolves to the same
 canonical names as a 2026 one.
 
+### How far back it actually works
+
+Two different limits, and they are worth keeping apart:
+
+- **The announcement index** goes back to 1998 and parses cleanly the whole way. So the
+  *date* a company changed registry is recoverable across the full archive.
+- **The PDFs are image-only scans before about 2008**, so there is no text to extract and
+  the outgoing/incoming registrar cannot be read without OCR.
+
+Measured over a 250-code pilot (4,230 company-years):
+
+| Era | `provider_change` notices resolved to an old → new pair |
+| --- | --- |
+| before 2005 | 0 / 2 |
+| 2005–2009 | 3 / 9 (33%) |
+| 2010–2014 | 11 / 23 (48%) |
+| 2015–2019 | 19 / 31 (61%) |
+| 2020+ | 55 / 57 (**97%**) |
+
+So this is close to complete for the last five years and thins out steadily before that.
+Adding OCR would be the way to push further back.
+
+Of the pairs that do resolve, 84% come from an explicit "from X to Y" in the text; only a
+handful rest on the weakest `two_brands` fallback. The `method` column is what tells them
+apart — do not treat a `two_brands` row as equal evidence to a `from_to` one.
+
 ### Worked example
 
 ECS Botanics is the case this was built from — its 30 July 2026 notice was the prompt. The
@@ -244,6 +275,32 @@ CODE   DATE        FROM                TO             METHOD
 ECS    2026-07-30  Automic             Xcend          cease_plus_one
 ECS    2023-07-24  Computershare       Automic        from_to
 ```
+
+### Pilot results (250 codes, 4,230 company-years)
+
+The scan took 3.7 minutes at ~19 requests/sec with no failed fetches, which puts the full
+market at roughly 25 minutes. It found **101 registrar switches across 89 of the 250
+companies** — so better than a third of the market has changed registry at least once in a
+window the daily tracker could never have seen. 88 came from `provider_change` headlines,
+8 from `address_only` and 5 from `registry_other`.
+
+Net movement over the resolved history, which is the thing the daily tracker cannot show
+you at all:
+
+| Registrar | Gained | Lost | Net |
+| --- | ---: | ---: | ---: |
+| Automic | 54 | 8 | **+46** |
+| Boardroom | 13 | 8 | +5 |
+| Xcend | 4 | 0 | +4 |
+| Computershare | 11 | 36 | **−25** |
+| MUFG Corporate Markets | 6 | 22 | −16 |
+| Advanced Share Registry | 6 | 19 | −13 |
+
+Two structural events are visible directly in the dates rather than inferred: a cluster of
+Advanced Share Registry → Automic moves over 29 Feb – 6 Mar 2024, and the Link Market
+Services → MUFG rebrand. Bulk transfers of a registrar's whole book look exactly like many
+individual switches on the same day, so treat same-week clusters as one event, not as
+evidence of companies independently choosing a new provider.
 
 ### Terms of use
 

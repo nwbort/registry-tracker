@@ -672,15 +672,22 @@ def _print_class_summary(conn: sqlite3.Connection) -> None:
 
 def cmd_resolve(args: argparse.Namespace) -> int:
     conn = connect(args.db)
+    # Address notices are opened by default. Measured on a 60-notice sample,
+    # 6.7% of them turn out to be real registrar switches - companies do lodge a
+    # genuine change under "Details of Share Registry address" - and since the
+    # PDF is the arbiter anyway, the headline only decides ordering, not
+    # eligibility. --skip-address buys back ~35% of the fetches if that trade is
+    # not worth it.
     wanted = [CLASS_PROVIDER, CLASS_OTHER]
-    if args.include_address:
+    if not args.skip_address:
         wanted.append(CLASS_ADDRESS)
     placeholders = ",".join("?" * len(wanted))
     sql = (
         f"SELECT a.* FROM announcement a "
         f"LEFT JOIN resolution r ON r.ids_id = a.ids_id "
         f"WHERE a.classification IN ({placeholders}) AND r.ids_id IS NULL "
-        f"ORDER BY a.date DESC"
+        f"ORDER BY CASE a.classification WHEN '{CLASS_PROVIDER}' THEN 0 "
+        f"WHEN '{CLASS_OTHER}' THEN 1 ELSE 2 END, a.date DESC"
     )
     rows = list(conn.execute(sql, wanted))
     if args.limit:
@@ -835,8 +842,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("resolve", help="read candidate PDFs and extract old/new registrar")
     s.add_argument("--limit", type=int)
-    s.add_argument("--include-address", action="store_true",
-                   help="also open address-only notices (slow, mostly confirms no change)")
+    s.add_argument("--skip-address", action="store_true",
+                   help="do not open address-change notices (~35%% fewer fetches, "
+                        "but misses the ~7%% of them that are real switches)")
     s.add_argument("--workers", type=int, default=6)
     s.add_argument("--delay", type=float, default=0.12)
     s.set_defaults(func=cmd_resolve)
