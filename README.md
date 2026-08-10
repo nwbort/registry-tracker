@@ -302,6 +302,54 @@ Services → MUFG rebrand. Bulk transfers of a registrar's whole book look exact
 individual switches on the same day, so treat same-week clusters as one event, not as
 evidence of companies independently choosing a new provider.
 
+### Schema (`announcements.sqlite`)
+
+Separate database from `registry.sqlite` — the daily tracker's state is unaffected by
+running this.
+
+`announcement` — one row per registry-related announcement found. Headlines that are not
+about a share registry are discarded at parse time and never stored.
+
+| Column | Meaning |
+| --- | --- |
+| `ids_id` | ASX announcement id (PK); also the key for the PDF URL |
+| `code` | code the announcement was **released under** |
+| `query_code` | code we searched for — differs from `code` after a ticker change |
+| `date` | release date, ISO |
+| `time` | release time as shown, e.g. `12:48 pm` |
+| `headline` | announcement title verbatim |
+| `classification` | `provider_change` / `address_only` / `registry_other` |
+| `price_sensitive` | 1 if flagged with the asterisk |
+| `pages` | page count |
+| `year` | the archive year slice it came from |
+
+`resolution` — one row per PDF opened. Separate from `announcement` so re-running `resolve`
+does not re-fetch, and so a failed extraction is recorded rather than retried forever.
+
+| Column | Meaning |
+| --- | --- |
+| `ids_id` | FK to `announcement` (PK) |
+| `pdf_url` | resolved `announcements.asx.com.au` link |
+| `old_registry` | outgoing registrar, canonical, NULL if not determined |
+| `new_registry` | incoming registrar, canonical, NULL if not determined |
+| `method` | which rule fired — `from_to` is strongest, `two_brands` weakest |
+| `brands` | every registrar named in the document, comma separated |
+| `resolved_at` | when the PDF was read |
+| `ok` | 1 if text was extractable — 0 means an image-only scan |
+
+`scanned` — one row per `(code, year)` fetched, so an interrupted crawl resumes and a year
+with genuinely no announcements is distinguishable from one never scanned.
+
+| Column | Meaning |
+| --- | --- |
+| `code`, `year` | composite PK |
+| `scanned_at` | when it was fetched |
+| `found` | total announcements on that page, before registry filtering |
+
+A registrar switch is `old_registry IS NOT NULL AND new_registry IS NOT NULL AND
+old_registry <> new_registry` — that is what `changes` and `export` select, and it draws
+from all three classifications, not just `provider_change`.
+
 ### Terms of use
 
 The ASX PDF interstitial draws an explicit distinction between *private or personal

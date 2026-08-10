@@ -536,10 +536,24 @@ CREATE TABLE IF NOT EXISTS resolution (
 """
 
 
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Add columns introduced after a database was first created.
+
+    CREATE TABLE IF NOT EXISTS silently leaves an existing table alone, so
+    without this a database from an earlier version keeps working right up
+    until the first INSERT that mentions a new column.
+    """
+    have = {row["name"] for row in conn.execute("PRAGMA table_info(announcement)")}
+    if "price_sensitive" not in have:
+        conn.execute("ALTER TABLE announcement ADD COLUMN price_sensitive INTEGER")
+        conn.commit()
+
+
 def connect(db_path: Path = DB_PATH) -> sqlite3.Connection:
     conn = sqlite3.connect(db_path, timeout=60)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
+    _migrate(conn)
     return conn
 
 
