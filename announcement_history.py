@@ -192,7 +192,13 @@ _HISTORICAL_REGISTRARS: list[tuple[str, str]] = [
     (r"white\s+outsourcing", "White Outsourcing"),
     (r"national\s+registry", "National Registry Services"),
     (r"gould\s+ralph", "Gould Ralph"),
-    (r"gg\s+registry|steinepreis", "GG Registry"),
+    # Not `steinepreis`, the Perth law firm GG Registry ran out of. In a
+    # corporate directory the solicitors are listed directly above the share
+    # registry, so the firm's name sits a line away from the words "Share
+    # Registry" no matter whose register it is - there is no context window
+    # narrow enough to tell the two entries apart and wide enough to be useful.
+    # A document where GG Registry holds the register says GG Registry.
+    (r"gg\s+registry", "GG Registry"),
     (r"gaden|gadens", "Gadens"),
     (r"gould", "Gould Ralph"),
 ]
@@ -247,14 +253,44 @@ _BRAND_ALIASES: dict[str, str] = {
     "MPMS": "MUFG Corporate Markets",
 }
 
+# Brands whose name is also an ordinary word, or a firm that appears in a
+# corporate directory wearing a different hat. These are only read as a
+# registrar when a registry word sits next to them.
+#
+#   Boardroom      - "PLACE: The Boardroom, Nissen Kestel Harford, Level 2
+#                    Spectrum" is where Resource Star held its 2009 AGM. That
+#                    notice names no registrar at all, and the venue was the
+#                    document's only brand, which is the shape `backfill`
+#                    trusts most: one brand, so it must be the registrar.
+#   Gadens         - a law firm, listed as solicitors by half the small-cap
+#                    market.
+#   Gould Ralph    - accountants who also register shares.
+#   GG Registry    - kept here for the same reason, though the pattern that
+#                    made it ambiguous (`steinepreis`) is gone.
+#
+# Requiring context costs a document that prints "Share Registry" as a heading
+# far from the name, which is why the window is generous.
+_NEEDS_REGISTRY_CONTEXT = {"Boardroom", "GG Registry", "Gadens", "Gould Ralph"}
+# `registers?` earns its place: "our register is currently maintained by
+# Boardroom Pty Limited" is how half these notices name the outgoing registrar,
+# and it is the only registry word in the sentence. It does not match
+# "registered", which is what keeps "registered holder" and "registered office"
+# - boilerplate in the meeting notices this rule exists to exclude - from
+# passing for context.
+_REGISTRY_CONTEXT = re.compile(
+    r"registr(?:y|ies|ars?)\b|\bregisters?\b|transfer\s+agents?\b", re.I
+)
+_CONTEXT_WINDOW = 120
 
-def _brand(text: str) -> str | None:
+
+def _brand(text: str, defined: dict[str, str] | None = None) -> str | None:
     """Canonical registrar name for a matched fragment, or None.
 
     Defunct registrars are resolved from the local table; everything else is
     handed to registry_tracker.canonical_registry so the names line up with what
     the daily tracker writes, then run through _BRAND_ALIASES so two names for
-    the same company do not look like two registrars.
+    the same company do not look like two registrars. `defined` adds the short
+    forms one particular document declared for itself - see _defined_terms.
     """
     lowered = text.lower()
     for pattern, name in _HISTORICAL_REGISTRARS:
@@ -264,16 +300,75 @@ def _brand(text: str) -> str | None:
         if re.search(pattern, lowered):
             name = canonical_registry(text)
             return _BRAND_ALIASES.get(name, name)
+    for alias, name in (defined or {}).items():
+        if re.search(rf"\b{re.escape(alias)}\b", lowered):
+            return name
     return None
 
 
-def _find_brands(text: str) -> list[tuple[int, str]]:
-    """Every registrar mention in `text` as (offset, canonical brand)."""
+# A notice names a registrar in full once and then uses a short form:
+#
+#     ... following the completion of Automic Pty Ltd ("Automic") acquisition of
+#     its share registry provider, Advanced Share Registry Limited ("Advanced")
+#     late last year, as of Monday, 4 March 2024, the provider of shareholder
+#     registry services for the Company will change from Advanced to Automic.
+#
+# That is Legend Mining, 1 Mar 2024. The sentence that says what happened uses
+# the short forms, and on their own they match nothing - "Advanced" is not
+# "advanced share". So the from/to rule found no brand on either side, fell
+# through to the two-brands rule, which orders by first appearance, and the
+# first mention of either name is Automic in the preamble explaining that
+# Automic had bought Advanced. The switch published backwards.
+#
+# Reading the document's own definitions fixes the direction at the source. The
+# expansion is required to name exactly one registrar, so a lead-in that sweeps
+# up a second brand - "moved from Computershare to Automic Pty Ltd ("Automic")"
+# - defines nothing rather than defining the alias wrongly.
+_DEFINED_TERM = re.compile(
+    r"(?P<name>[A-Za-z][\w&.,'\-]*(?:\s+[\w&.,'\-]+){0,5})\s*"
+    r"[\(\[]\s*[\"“‘']?(?P<alias>[A-Za-z][\w&\-]{2,30})[\"”’']?\s*[\)\]]"
+)
+
+
+def _defined_terms(text: str) -> dict[str, str]:
+    """Short forms this document declared, as {alias: canonical brand}."""
+    out: dict[str, str] = {}
+    for m in _DEFINED_TERM.finditer(text):
+        alias = m.group("alias").lower()
+        if alias in out or _brand(alias):
+            continue
+        named = {name for _, name in _find_brands(m.group("name"))}
+        if len(named) == 1:
+            out[alias] = named.pop()
+    return out
+
+
+def _find_brands(text: str, defined: dict[str, str] | None = None) -> list[tuple[int, str]]:
+    """Every registrar mention in `text` as (offset, canonical brand).
+
+    A brand in _NEEDS_REGISTRY_CONTEXT only counts where the surrounding text
+    says it is the registry; every other brand is unambiguous enough that its
+    name alone is the evidence.
+    """
+    pattern = _REGISTRAR_ANY
+    if defined:
+        pattern = re.compile(
+            "|".join([_REGISTRAR_ANY.pattern]
+                     + [rf"\b{re.escape(a)}\b" for a in defined]),
+            re.I,
+        )
     out: list[tuple[int, str]] = []
-    for m in _REGISTRAR_ANY.finditer(text):
-        name = _brand(m.group(0))
-        if name:
-            out.append((m.start(), name))
+    for m in pattern.finditer(text):
+        name = _brand(m.group(0), defined)
+        if not name:
+            continue
+        if name in _NEEDS_REGISTRY_CONTEXT:
+            window = text[
+                max(0, m.start() - _CONTEXT_WINDOW) : m.end() + _CONTEXT_WINDOW
+            ]
+            if not _REGISTRY_CONTEXT.search(window):
+                continue
+        out.append((m.start(), name))
     return out
 
 
@@ -311,30 +406,37 @@ def resolve_registrars(text: str) -> Resolution:
 
     Rule 5 leaves the other side NULL, which is not a change `changes` can use -
     `backfill` is what fills it in, from documents outside the notice.
+
+    Every rule reads the short forms the document defined for itself, so a
+    sentence that names a registrar the way the rest of the document does -
+    "from Advanced to Automic" - is understood by the rules that know which side
+    is which, instead of falling through to the one that only knows the order
+    the names appear in.
     """
     flat = " ".join(text.split())
+    defined = _defined_terms(flat)
     brands = []
-    for _, name in _find_brands(flat):
+    for _, name in _find_brands(flat, defined):
         if name not in brands:
             brands.append(name)
     res = Resolution(brands=brands)
 
     for m in _FROM_TO.finditer(flat):
-        old = _brand(m.group("old"))
-        new = _brand(m.group("new"))
+        old = _brand(m.group("old"), defined)
+        new = _brand(m.group("new"), defined)
         if old and new and old != new:
             return Resolution(old=old, new=new, method="from_to", brands=brands)
 
     old_guess = None
     for m in _CEASE.finditer(flat):
         chunk = m.group("who") or m.group("who2") or ""
-        old_guess = _brand(chunk)
+        old_guess = _brand(chunk, defined)
         if old_guess:
             break
 
     new_guess = None
     for m in _APPOINT.finditer(flat):
-        new_guess = _brand(m.group("new"))
+        new_guess = _brand(m.group("new"), defined)
         if new_guess:
             break
 
@@ -850,10 +952,17 @@ def cmd_resolve(args: argparse.Namespace) -> int:
     # extraction rules do: --reresolve re-reads the documents an old rule
     # decided, and since the row is rewritten from scratch, any side `backfill`
     # had supplied for it goes too and has to be earned again.
+    #
+    # --reresolve-brand is the same idea keyed on what was found rather than how:
+    # tightening one brand's pattern invalidates exactly the documents that
+    # matched it, and leaves the rest of the table alone.
     redo = ""
     if args.reresolve:
-        redo = " OR r.method = ?"
+        redo += " OR r.method = ?"
         params.append(args.reresolve)
+    if args.reresolve_brand:
+        redo += " OR r.brands LIKE ?"
+        params.append(f"%{args.reresolve_brand}%")
     sql = (
         f"SELECT a.* FROM announcement a "
         f"LEFT JOIN resolution r ON r.ids_id = a.ids_id "
@@ -910,7 +1019,7 @@ def cmd_resolve(args: argparse.Namespace) -> int:
 # row half-resolved is that one column is filled and the other is not, however
 # the resolver got there.
 _ONE_SIDED_SQL = """
-SELECT a.code, a.date, a.headline, a.classification,
+SELECT a.code, a.query_code, a.date, a.headline, a.classification,
        r.ids_id, r.old_registry, r.new_registry, r.method
 FROM announcement a
 JOIN resolution r ON r.ids_id = a.ids_id
@@ -947,9 +1056,29 @@ def _probe_pdf(
 
 
 def _candidate_documents(
-    client: AsxArchiveClient, code: str, on_date: str, before: bool
+    client: AsxArchiveClient, code: str, ids_id: str, on_date: str, before: bool
 ) -> list[Announcement]:
     """Corroborating announcements on one side of `on_date`, nearest to it first.
+
+    `code` must be the code the company trades under *now*, not the one the
+    notice was released under. ASX tickers get recycled, and the archive
+    resolves a query code to a single entity - whichever one holds it latest -
+    then serves that entity's whole history under every code it has used. So
+    asking about a code its original owner has since given up does not return
+    that owner's filings at all: it returns a stranger's.
+
+    Intiger Group lodged its 13 Jun 2017 registry change under IAM, but IAM now
+    belongs to a company that traded as TAU in 2017, and asking the archive
+    about IAM in 2016-17 returns nothing but TAU. Trustees Australia's notice of
+    meeting names Boardroom, honestly and as its only registrar, so it looks
+    exactly like the evidence this function exists to find - and the register it
+    describes is not Intiger's. Asking under CF1, the code Intiger's chain wound
+    up at, returns GBR/RSL/SRT/IAM/CF1: one entity, its whole life.
+
+    `ids_id` is the notice's own announcement, used as the proof that the code
+    still resolves to the right entity. If the archive does not serve the notice
+    on the notice's own year page, nothing else on that page is this company's
+    either, and returning no candidates is the only safe answer.
 
     Only the announcement's own year and the neighbouring one on that side are
     indexed. A company lodges an annual report and a notice of meeting every
@@ -964,11 +1093,19 @@ def _candidate_documents(
             date.fromisoformat(on_date) + timedelta(days=_EFFECTIVE_LAG_DAYS)
         ).isoformat()
 
+    own_year = client.index(code, year)
+    if own_year is None or not any(a.ids_id == ids_id for a in own_year):
+        log.debug("%s no longer resolves to the entity that lodged %s", code, ids_id)
+        return []
+    indexed = {year: own_year}
+
     out: list[Announcement] = []
     for y in years:
         if y > date.today().year:
             continue
-        for a in client.index(code, y) or []:
+        if y not in indexed:
+            indexed[y] = client.index(code, y) or []
+        for a in indexed[y]:
             if (a.date < cutoff) != before:
                 continue
             if corroborating(a.headline):
@@ -977,8 +1114,40 @@ def _candidate_documents(
     return out
 
 
+def _drop_stale_probes(conn: sqlite3.Connection, brand: str) -> tuple[int, int]:
+    """Forget cached probes naming `brand`, and un-backfill what they decided.
+
+    The probe table is a cache of an extraction rule's output, so tightening a
+    rule makes every probe that fired on it stale. Dropping the probe is not
+    enough on its own: a resolution it filled in keeps the answer long after the
+    evidence is gone, and `backfill` skips rows that already have both sides. So
+    the filled side is cleared too and the notice goes back to being one-sided,
+    which is what it always was on the evidence.
+    """
+    like = f"%{brand}%"
+    reset = conn.execute(
+        """UPDATE resolution SET
+             old_registry = CASE WHEN method LIKE '%+prior_doc' THEN NULL ELSE old_registry END,
+             new_registry = CASE WHEN method LIKE '%+next_doc' THEN NULL ELSE new_registry END,
+             method = REPLACE(REPLACE(method, '+prior_doc', ''), '+next_doc', ''),
+             backfilled_from = NULL
+           WHERE backfilled_from IN (SELECT ids_id FROM probe WHERE brands LIKE ?)""",
+        (like,),
+    ).rowcount
+    dropped = conn.execute("DELETE FROM probe WHERE brands LIKE ?", (like,)).rowcount
+    conn.commit()
+    return dropped, reset
+
+
 def cmd_backfill(args: argparse.Namespace) -> int:
     conn = connect(args.db)
+    if args.reprobe_brand:
+        dropped, reset = _drop_stale_probes(conn, args.reprobe_brand)
+        print(
+            f"dropped {dropped} cached probes naming {args.reprobe_brand}; "
+            f"{reset} notices went back to one-sided",
+            file=sys.stderr,
+        )
     # Address notices are excluded by default. They are one-sided for the honest
     # reason - the registrar moved office, so there is only ever one to name -
     # and probing them would pair each with whatever the register looked like
@@ -988,6 +1157,9 @@ def cmd_backfill(args: argparse.Namespace) -> int:
         wanted.append(CLASS_OTHER)
     placeholders = ",".join("?" * len(wanted))
     rows = list(conn.execute(_ONE_SIDED_SQL.format(placeholders=placeholders), wanted))
+    if args.only:
+        only = {c.strip().upper() for c in args.only.split(",") if c.strip()}
+        rows = [r for r in rows if only & {r["code"], r["query_code"]}]
     if args.limit:
         rows = rows[: args.limit]
     if not rows:
@@ -1006,7 +1178,12 @@ def cmd_backfill(args: argparse.Namespace) -> int:
     def work(row: sqlite3.Row):
         before = row["old_registry"] is None
         known = row["new_registry"] if before else row["old_registry"]
-        cands = _candidate_documents(client, row["code"], row["date"], before)
+        # query_code is the code the scan asked about, i.e. the one the company
+        # trades under today - the only code the archive still serves this
+        # company's history under. Rows written before that column existed fall
+        # back to the released-under code.
+        live = row["query_code"] or row["code"]
+        cands = _candidate_documents(client, live, row["ids_id"], row["date"], before)
         return row, before, known, cands[: args.probes]
 
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
@@ -1185,6 +1362,9 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--reresolve", metavar="METHOD",
                    help="also re-read PDFs whose stored resolution used METHOD "
                         "(e.g. one_brand), after a change to the extraction rules")
+    s.add_argument("--reresolve-brand", metavar="BRAND",
+                   help="also re-read PDFs whose stored resolution names BRAND, "
+                        "after a change to that brand's pattern")
     s.add_argument("--workers", type=int, default=6)
     s.add_argument("--delay", type=float, default=0.12)
     s.set_defaults(func=cmd_resolve)
@@ -1198,6 +1378,14 @@ def build_parser() -> argparse.ArgumentParser:
                    help="documents to open per notice before giving up (default 3)")
     s.add_argument("--include-other", action="store_true",
                    help=f"also backfill {CLASS_OTHER} notices, not just {CLASS_PROVIDER}")
+    s.add_argument("--only", metavar="CODES",
+                   help="comma-separated codes to backfill, matched against the "
+                        "code a notice was released under or the one it was "
+                        "scanned as (default: every one-sided notice)")
+    s.add_argument("--reprobe-brand", metavar="BRAND",
+                   help="first forget cached probes naming BRAND and un-backfill "
+                        "whatever they decided, so those notices are re-earned "
+                        "under the current extraction rules")
     s.add_argument("--workers", type=int, default=6)
     s.add_argument("--delay", type=float, default=0.12)
     s.set_defaults(func=cmd_backfill)
