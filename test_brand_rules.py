@@ -6,11 +6,56 @@ trimmed to the sentence the rule turns on. Run with `python test_brand_rules.py`
 
 import unittest
 
-from announcement_history import _find_brands, resolve_registrars
+from announcement_history import (
+    CLASS_ADDRESS,
+    CLASS_OTHER,
+    CLASS_PROVIDER,
+    _find_brands,
+    classify_headline,
+    resolve_registrars,
+)
 
 
 def brands(text: str) -> list[str]:
     return list(dict.fromkeys(name for _, name in _find_brands(text)))
+
+
+class Headlines(unittest.TestCase):
+    """What is worth opening. A headline never matched is a change never found."""
+
+    def test_share_register_is_the_same_notice_as_share_registry(self):
+        # Macquarie Group, 11 Aug 2020 - the move to Link. Matches no spelling
+        # of "registry", so before this it was never opened.
+        self.assertEqual(
+            classify_headline("Change of share register notification"), CLASS_PROVIDER
+        )
+        self.assertEqual(classify_headline("Transfer of share register"), CLASS_PROVIDER)
+        self.assertEqual(classify_headline("Change of Share Registry"), CLASS_PROVIDER)
+
+    def test_address_still_wins_over_provider(self):
+        self.assertEqual(
+            classify_headline("Change of share register address"), CLASS_ADDRESS
+        )
+
+    def test_unqualified_register_words_are_not_this(self):
+        # A bare "register" is the register of members, a registered office, or
+        # a substantial holding - the qualifier is what makes it the share
+        # register.
+        for headline in (
+            "Register of members",
+            "Change of registered office",
+            "Becoming a substantial holder",
+            "Notification of registered address",
+            "Cleansing statement and register update",
+        ):
+            self.assertIsNone(classify_headline(headline), headline)
+
+    def test_registry_industry_talking_about_itself_is_excluded(self):
+        self.assertIsNone(classify_headline("Computershare acquires US Transfer Agent"))
+        self.assertIsNone(classify_headline("Sale of registry business"))
+
+    def test_unclear_registry_headline_falls_to_other(self):
+        self.assertEqual(classify_headline("Share register update"), CLASS_OTHER)
 
 
 class AmbiguousBrands(unittest.TestCase):

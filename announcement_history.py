@@ -90,7 +90,18 @@ log = logging.getLogger("announcement_history")
 # The noun for the thing that changes. "Transfer agent" is the North-American
 # name for a registrar, and companies with a second listing in Toronto or New
 # York use it in place of - or alongside - "share registry".
-_REGISTRY_NOUN = r"(?:share\s*)?registr(?:y|ies|ars?)\b|transfer\s+agents?\b"
+#
+# The register is the thing; the registry is who keeps it - and a notice is as
+# likely to be headlined for one as the other. Macquarie Group moved to Link on
+# 17 Aug 2020 under "Change of share register notification", which matches no
+# spelling of "registry" and so was never opened, never resolved, and never
+# appeared in the history at all. The qualifier is required: a bare "register"
+# is the register of members, the register of substantial holdings, or a
+# registered office, none of which are this.
+_REGISTRY_NOUN = (
+    r"(?:share\s*)?registr(?:y|ies|ars?)\b|transfer\s+agents?\b|"
+    r"(?:share|securit(?:y|ies)|holder)\s*registers?\b"
+)
 
 # Anything matching this is about a share registry in some way. Deliberately
 # broad - narrowing happens below, and a headline we never look at is a change
