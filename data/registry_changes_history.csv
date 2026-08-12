@@ -78,6 +78,7 @@ CVC,2025-06-06,Registry Direct,Computershare,Change of Registrar,provider_change
 MYE,2025-06-06,MUFG Corporate Markets,Computershare,Change of Registry notification,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250606/pdf/06khspyxbd9qg5.pdf
 ARX,2025-05-30,Boardroom,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250530/pdf/06k8fz748gxpgb.pdf
 MLG,2025-05-30,MUFG Corporate Markets,Computershare,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250530/pdf/06k8lg1mtw0q12.pdf
+KCN,2025-05-30,Automic,MUFG Corporate Markets,Change of Share Register Notification (KCN),provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20250530/pdf/06k8cxnp454shc.pdf
 AQI,2025-05-16,Automic,Computershare,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250516/pdf/06jtl05k5fnq4c.pdf
 HE8,2025-05-09,Computershare,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250509/pdf/06jlg0qh7bb2dl.pdf
 ABB,2025-05-05,MUFG Corporate Markets,Computershare,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20250505/pdf/06jdfv6zrw0kwq.pdf
@@ -115,6 +116,10 @@ WOA,2024-12-05,MUFG Corporate Markets,Automic,Change of Share Registry,provider_
 MCA,2024-12-03,Automic,MUFG Corporate Markets,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20241203/pdf/06c60vhlr1mfls.pdf
 ROG,2024-11-29,Automic,Xcend,Change of Share Registry,provider_change,cease_plus_one,https://announcements.asx.com.au/asxpdf/20241129/pdf/06c27pmlws5bp9.pdf
 LVE,2024-11-18,Automic,Xcend,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20241118/pdf/06bj0b6nbvl9r2.pdf
+AFI,2024-10-30,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20241030/pdf/069t6105xpp2r5.pdf
+AMH,2024-10-30,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20241030/pdf/069t704h1kzlx2.pdf
+DJW,2024-10-30,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20241030/pdf/069t74py0c2y61.pdf
+MIR,2024-10-30,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20241030/pdf/069t72jbm7yrq2.pdf
 LKO,2024-10-23,Computershare,Boardroom,Change of Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20241023/pdf/069gkfq0qfnnz4.pdf
 GLH,2024-10-07,MUFG Corporate Markets,Boardroom,Change of Share Registry Provider,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20241007/pdf/068tlrpct0s4rb.pdf
 ATH,2024-10-04,Computershare,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20241004/pdf/068rm0g0lngkts.pdf
@@ -309,6 +314,7 @@ FRX,2023-06-29,Advanced Share Registry,Automic,Change of Share Registry,provider
 HMI,2023-06-23,Automic,Computershare,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20230623/pdf/05qy5pf4nzmbv0.pdf
 OSX,2023-06-23,MUFG Corporate Markets,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20230623/pdf/05qy57qnj1hhbx.pdf
 WSI,2023-06-13,Automic,Advanced Share Registry,Change of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20230613/pdf/05qlxz5rs5nvzq.pdf
+OAK,2023-06-02,Automic,MUFG Corporate Markets,Change of Share Register Notification,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20230602/pdf/05q9td0r5jcd19.pdf
 IXU,2023-05-26,MUFG Corporate Markets,Automic,Change of Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20230526/pdf/05q1w4mncztm2g.pdf
 SKN,2023-05-24,MUFG Corporate Markets,Advanced Share Registry,Change of share registry - Update,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20230524/pdf/05q04ndq6nbzq7.pdf
 QRI,2023-05-22,Automic,MUFG Corporate Markets,Update - Change in Unit Registry Provider,registry_other,from_to,https://announcements.asx.com.au/asxpdf/20230522/pdf/05pxd9klgpx6p1.pdf
@@ -349,6 +355,7 @@ BKI,2023-01-09,Advanced Share Registry,MUFG Corporate Markets,Change of Share Re
 BYH,2022-12-09,Computershare,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20221209/pdf/45jn8kzdqsj4jz.pdf
 DRE,2022-12-09,Computershare,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20221209/pdf/45jnf5skdzmr70.pdf
 IPT,2022-12-02,Computershare,Advanced Share Registry,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20221202/pdf/45jdd6j074kfrm.pdf
+HPG,2022-11-28,Automic,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20221128/pdf/45j40n2pb27l12.pdf
 ECF,2022-11-18,Boardroom,Computershare,Change of Security Registry,registry_other,from_to,https://announcements.asx.com.au/asxpdf/20221118/pdf/45hrrwtvrwg9dr.pdf
 GTR,2022-11-14,Advanced Share Registry,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20221114/pdf/45hk7zxc1b0jjg.pdf
 CR9,2022-10-31,Automic,Advanced Share Registry,Change of share registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20221031/pdf/45h25hm8cf3l60.pdf
@@ -411,6 +418,7 @@ SWP,2021-06-28,Advanced Share Registry,Automic,Change of Share Registry,provider
 CYM,2021-06-25,Advanced Share Registry,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20210625/pdf/44xpmrvyfykwd0.pdf
 PF1,2021-06-01,Boardroom,Computershare,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20210601/pdf/44wzx88z0prjcl.pdf
 TEM,2021-05-28,MUFG Corporate Markets,Automic,Change of Share Registry details,provider_change,cease_plus_one,https://announcements.asx.com.au/asxpdf/20210528/pdf/44wx2qzzlhqvvn.pdf
+ACW,2021-05-28,MUFG Corporate Markets,Automic,Change of Share Register Notification,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20210528/pdf/44wwqbcnwy4kq6.pdf
 MBM,2021-05-17,Boardroom,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20210517/pdf/44wk3bl3s707hn.pdf
 INV,2021-05-14,Boardroom,Automic,INV - Change of Share Registry Details - CORRECTION,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20210514/pdf/44whl61y36d8g7.pdf
 INV,2021-05-14,Boardroom,Automic,INV - Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20210514/pdf/44whjbdvhw37b8.pdf
@@ -441,6 +449,8 @@ IP1,2020-10-12,Registry Direct,Boardroom,Change of Share Registry,provider_chang
 ICT,2020-10-05,MUFG Corporate Markets,Advanced Share Registry,Change of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20201005/pdf/44nbv9x23fn2wf.pdf
 EXL,2020-09-25,Computershare,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20200925/pdf/44mzqbn675jycg.pdf
 PLS,2020-09-08,Advanced Share Registry,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20200908/pdf/44mfg3nszcgpn5.pdf
+ODY,2020-08-28,Computershare,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20200828/pdf/44m1qfyrj9wbzv.pdf
+MQG,2020-08-11,Boardroom,MUFG Corporate Markets,Change of share register notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20200811/pdf/44ld0nn28zwk30.pdf
 HOR,2020-07-21,Computershare,Advanced Share Registry,Change of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20200721/pdf/44kq0vt9nf5s6y.pdf
 CAT,2020-07-10,Computershare,Boardroom,Change of share registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20200710/pdf/44kfgxvm2mmzmd.pdf
 SI6,2020-07-01,Advanced Share Registry,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20200701/pdf/44k4d7m9pbqbwl.pdf
@@ -469,6 +479,7 @@ AFL,2019-09-27,Boardroom,Automic,Change of Share Registry Details,provider_chang
 WGX,2019-09-26,Security Transfer Australia,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20190926/pdf/448wnb0qbnx1ck.pdf
 EOL,2019-09-23,Boardroom,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20190923/pdf/448r91gm9fkdjr.pdf
 LKE,2019-09-23,MUFG Corporate Markets,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20190923/pdf/448rnpxd51wgrs.pdf
+VXR,2019-09-13,Advanced Share Registry,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20190913/pdf/448j10jr02h3zq.pdf
 CYQ,2019-09-12,Advanced Share Registry,Computershare,Change of Share Registry,provider_change,two_brands,https://announcements.asx.com.au/asxpdf/20190912/pdf/448gn33wft25tm.pdf
 AV1,2019-08-30,Security Transfer Australia,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20190830/pdf/448192cgs7hf5r.pdf
 CHK,2019-08-09,Security Transfer Australia,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20190809/pdf/447byyxcts23z8.pdf
@@ -480,7 +491,9 @@ BGL,2019-07-10,Security Transfer Australia,Computershare,CHANGE OF SHARE REGISTR
 HYD,2019-06-21,MUFG Corporate Markets,Boardroom,Change in share registry services provider,provider_change,cease_plus_one,https://announcements.asx.com.au/asxpdf/20190621/pdf/44614308hph6sb.pdf
 NVO,2019-06-17,Security Transfer Australia,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20190617/pdf/445wsqwpmlmd1v.pdf
 BXB,2019-04-29,MUFG Corporate Markets,Boardroom,BRAMBLES CHANGE OF SHARE REGISTRY,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20190429/pdf/444llv5zqkj46g.pdf
+ASL,2019-04-18,Computershare,MUFG Corporate Markets,ASL Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20190418/pdf/444fp4k8c2jnvg.pdf
 RSH,2019-04-11,Computershare,Security Transfer Australia,Details of Share Registry address,address_only,cease_plus_one,https://announcements.asx.com.au/asxpdf/20190411/pdf/4447dbpbvvrvf0.pdf
+OVL,2019-03-25,Security Transfer Australia,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20190325/pdf/443rffchvlyc6p.pdf
 WBT,2019-03-08,Security Transfer Australia,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20190308/pdf/443bhnzkb08rnb.pdf
 AYR,2019-03-01,Security Transfer Australia,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20190301/pdf/4434l8c5cr00br.pdf
 ARV,2019-02-28,Security Transfer Australia,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20190228/pdf/4431y62v2bx2fs.pdf
@@ -496,12 +509,14 @@ GLE,2018-12-17,MUFG Corporate Markets,Boardroom,Change of Registry,provider_chan
 HZN,2018-12-10,Boardroom,Computershare,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20181210/pdf/44132b5kh2wkkl.pdf
 IME,2018-12-07,Boardroom,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20181207/pdf/4411vjgqkrc2xm.pdf
 RCL,2018-12-03,Boardroom,Registry Direct,Change of Share Registry Details,provider_change,cease_plus_one,https://announcements.asx.com.au/asxpdf/20181203/pdf/440wlgjdqlgrzd.pdf
+BMT,2018-11-26,Security Transfer Australia,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20181126/pdf/440mrlnqx55sg7.pdf
 CPV,2018-11-26,Registry Direct,Security Transfer Australia,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20181126/pdf/440ms17rrtsrf0.pdf
 PUR,2018-11-22,Security Transfer Australia,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20181122/pdf/440k948g0hq6q9.pdf
 CNI,2018-11-19,Computershare,Boardroom,Change in share registry service provider,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20181119/pdf/440f6t4pg05b5f.pdf
 APC,2018-11-16,Security Transfer Australia,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20181116/pdf/440cg0tkml3ps0.pdf
 S3R,2018-11-12,Security Transfer Australia,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20181112/pdf/4406f23k2d5lss.pdf
 CRB,2018-10-29,Security Transfer Australia,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20181029/pdf/43zr29q688dfk1.pdf
+CLY,2018-10-29,Security Transfer Australia,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20181029/pdf/43zr3dp623277q.pdf
 MBK,2018-10-29,Advanced Share Registry,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20181029/pdf/43zqn14blx727x.pdf
 NCL,2018-10-22,MUFG Corporate Markets,Automic,Change of Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20181022/pdf/43zghlt38ywm36.pdf
 AVL,2018-10-18,Computershare,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20181018/pdf/43zdb0yycnrwd4.pdf
@@ -517,10 +532,14 @@ AMO,2018-09-17,MUFG Corporate Markets,Boardroom,Change In Registry Complete,prov
 UCW,2018-09-10,MUFG Corporate Markets,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180910/pdf/43y5mnl02tkywf.pdf
 PSC,2018-09-10,MUFG Corporate Markets,Automic,Change of share registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180910/pdf/43y5w69scc25ln.pdf
 AMO,2018-09-07,MUFG Corporate Markets,Boardroom,Change in Provider of Registry Management,registry_other,from_to,https://announcements.asx.com.au/asxpdf/20180907/pdf/43y496vt4t0yl2.pdf
+EQT,2018-09-07,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20180907/pdf/43y4bg3ksqmqqp.pdf
 MQG,2018-09-03,MUFG Corporate Markets,Boardroom,Confirmation of change of registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20180903/pdf/43xztn72wsmk5c.pdf
 VKA,2018-09-03,Computershare,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180903/pdf/43xzlpkdpgbkrv.pdf
+GEM,2018-09-03,Advanced Share Registry,MUFG Corporate Markets,Change of Share Register,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20180903/pdf/43xzd35n3d6h07.pdf
 KBC,2018-08-27,Advanced Share Registry,Registry Direct,ASX Change of Share Registry,provider_change,two_brands,https://announcements.asx.com.au/asxpdf/20180827/pdf/43xqm2zyxtn6t3.pdf
 PPL,2018-08-27,Boardroom,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180827/pdf/43xq2828xrh803.pdf
+MQG,2018-08-24,MUFG Corporate Markets,Boardroom,Change of Share Register Notification,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180824/pdf/43xn6jf208f5d9.pdf
+TFL,2018-08-21,Advanced Share Registry,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20180821/pdf/43xhxjh1g469lc.pdf
 MMR,2018-08-09,Advanced Share Registry,Boardroom,Change of Share Registry Services,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180809/pdf/43x6dxvjj0jm2r.pdf
 BNL,2018-08-06,Security Transfer Australia,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180806/pdf/43x2xrrn6sjk6y.pdf
 RCE,2018-07-16,Computershare,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180716/pdf/43wjz4m0qqdypn.pdf
@@ -529,7 +548,9 @@ MEI,2018-07-06,Security Transfer Australia,Automic,Change of Share Registry Deta
 MEL,2018-07-02,Registry Direct,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20180702/pdf/43w68bv8mz9cpq.pdf
 BCL,2018-06-29,Computershare,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180629/pdf/43w54wq3gvrhnh.pdf
 EUR,2018-06-25,Advanced Share Registry,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20180625/pdf/43w15kpg072g10.pdf
+HWK,2018-06-15,Security Transfer Australia,Automic,CHANGE OF SHARE REGISTRY,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20180615/pdf/43vt3zn5c8lvwq.pdf
 ONX,2018-06-15,Security Transfer Australia,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180615/pdf/43vtbm7qyvzm12.pdf
+PPK,2018-06-13,Boardroom,Computershare,Change of Share Register,provider_change,cease_appoint,https://announcements.asx.com.au/asxpdf/20180613/pdf/43vr9ybc00crk4.pdf
 ASB,2018-06-12,Advanced Share Registry,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20180612/pdf/43vpdm0tt92zc0.pdf
 TTM,2018-05-18,Security Transfer Australia,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180518/pdf/43v3y7v90yc658.pdf
 MLX,2018-05-16,Security Transfer Australia,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20180516/pdf/43v2ddz36wqnyb.pdf
@@ -544,6 +565,7 @@ DTM,2018-03-05,MUFG Corporate Markets,Automic,Change of Company Registry,registr
 KAI,2018-03-01,Security Transfer Australia,Advanced Share Registry,Transfer of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20180301/pdf/43s2yky34xn6w3.pdf
 NSC,2018-02-23,Computershare,Boardroom,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180223/pdf/43rw3kbg09t01l.pdf
 BPP,2018-02-19,Security Transfer Australia,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180219/pdf/43rpmyxlr0xvcc.pdf
+SAM,2018-02-14,Registry Direct,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20180214/pdf/43rkx7vhv4c8tr.pdf
 CRO,2018-02-12,Computershare,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180212/pdf/43rhb99vr15wj5.pdf
 INK,2018-02-05,MUFG Corporate Markets,Automic,Change of Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180205/pdf/43rb8v6d609kk5.pdf
 JAL,2018-02-05,Security Transfer Australia,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20180205/pdf/43rbh7st1l8qph.pdf
@@ -554,21 +576,27 @@ VYS,2018-01-10,Security Transfer Australia,Automic,Change of Share Registry,prov
 BLG,2017-12-11,Security Transfer Australia,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20171211/pdf/43q1pld2vwrxcb.pdf
 PMC,2017-12-08,Computershare,MUFG Corporate Markets,Change of Share Registrar,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20171208/pdf/43q0vqthty1k3x.pdf
 IMF,2017-12-08,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20171208/pdf/43q0m72ywrpqf4.pdf
+BXN,2017-12-01,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20171201/pdf/43psw499jpy4c0.pdf
 REA,2017-12-01,Boardroom,MUFG Corporate Markets,Change in Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20171201/pdf/43pthfvggj9chb.pdf
 CL8,2017-11-24,Boardroom,Automic,Change of share registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20171124/pdf/43pkvwbgx5rt6n.pdf
 GML,2017-11-23,Security Transfer Australia,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20171123/pdf/43phnjmplgd4df.pdf
+PMC,2017-11-23,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20171123/pdf/43pj9vdr28h99n.pdf
 CLQ,2017-11-13,Computershare,Automic,Change of Share Registry Details,provider_change,cease_plus_one,https://announcements.asx.com.au/asxpdf/20171113/pdf/43p58wz6bb5d67.pdf
 CMP,2017-11-13,MUFG Corporate Markets,Automic,Change of Share Registry Notification,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20171113/pdf/43p5cbv9jdjjsc.pdf
 RTR,2017-11-03,Advanced Share Registry,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20171103/pdf/43nyth8xwnfmjx.pdf
+OFX,2017-10-18,Computershare,MUFG Corporate Markets,Notification of Change of Share Register,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20171018/pdf/43nb48t7ljxnps.pdf
 ASP,2017-10-11,Advanced Share Registry,Automic,Change of Share Registry details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20171011/pdf/43n4tfsc118zjy.pdf
+ESH,2017-10-06,Security Transfer Australia,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20171006/pdf/43n0j744gysq5v.pdf
 PKO,2017-10-02,Security Transfer Australia,Automic,Change of Share Registry Notification,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20171002/pdf/43mvxwxtxs3mqd.pdf
 MRD,2017-09-29,Security Transfer Australia,Advanced Share Registry,Change of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20170929/pdf/43mt8j90359x04.pdf
 CDY,2017-09-25,Boardroom,Automic,CHANGE OF SHARE REGISTRY DETAILS,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20170925/pdf/43mlwk7h7dsdk4.pdf
+DHR,2017-09-22,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170922/pdf/43mjymzzfwc3dj.pdf
 AJX,2017-09-08,Computershare,Automic,Change of Share Registry and Company's Contact,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20170908/pdf/43m5gmhczxgypn.pdf
 LMW,2017-08-30,MUFG Corporate Markets,Automic,Details of Share Registry address,address_only,from_to,https://announcements.asx.com.au/asxpdf/20170830/pdf/43lw10gcg4gfs1.pdf
 LMW,2017-08-28,MUFG Corporate Markets,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20170828/pdf/43lspdqmwzjklt.pdf
 SRO,2017-08-28,MUFG Corporate Markets,Automic,Change of Share Registry Notification,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20170828/pdf/43lt2z3s15x4g5.pdf
 CGO,2017-08-21,Computershare,Boardroom,Change in Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20170821/pdf/43lkkzl0m5nwkw.pdf
+TTW,2017-08-18,Boardroom,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170818/pdf/43lhybn06phj24.pdf
 SEQ,2017-08-18,Computershare,Registry Direct,Change of Share Registry Service Provider,provider_change,cease_appoint,https://announcements.asx.com.au/asxpdf/20170818/pdf/43lhv1ylk647gv.pdf
 ENX,2017-08-14,MUFG Corporate Markets,Automic,Change of Share Registry Notification,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20170814/pdf/43lcppfc3pwmmy.pdf
 RSG,2017-08-11,Security Transfer Australia,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170811/pdf/43lbmg6p6zz00y.pdf
@@ -578,18 +606,30 @@ ANG,2017-07-28,Computershare,Advanced Share Registry,Change of Share Registry No
 FHS,2017-07-28,Computershare,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20170728/pdf/43ky86z0vgx4f2.pdf
 BGR,2017-07-18,Computershare,Automic,Change in Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20170718/pdf/43kq38wk1l3kwv.pdf
 BLZ,2017-07-17,Advanced Share Registry,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170717/pdf/43kpnbrbvpnfjb.pdf
+AUG,2017-07-17,MUFG Corporate Markets,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170717/pdf/43kpkv852qvkl6.pdf
 STO,2017-07-03,Computershare,Boardroom,Change of Share Registry Service Provider,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20170703/pdf/43kcck9lcz0354.pdf
 ROG,2017-06-19,MUFG Corporate Markets,Advanced Share Registry,TRANSFER OF SHARE REGISTRY RED SKY ENERGY LIMITED,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20170619/pdf/43k0r8vntnrtql.pdf
+KSN,2017-06-15,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170615/pdf/43jytc0ytc2mph.pdf
 IAM,2017-06-13,Security Transfer Australia,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170613/pdf/43jx585vbr7jz3.pdf
+CIZ,2017-06-13,Security Transfer Australia,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170613/pdf/43jx752hpshbsx.pdf
 8CO,2017-06-05,Boardroom,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20170605/pdf/43jqvg8qttyvqk.pdf
 CZR,2017-05-26,Security Transfer Australia,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20170526/pdf/43jjqtnsczn59f.pdf
+WGL,2017-05-22,Security Transfer Australia,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170522/pdf/43jfbqdxjq3g5j.pdf
+FRN,2017-05-22,Security Transfer Australia,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170522/pdf/43jfbs62qwwqsg.pdf
 NAG,2017-05-19,Advanced Share Registry,Automic,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20170519/pdf/43jclwms31xjm5.pdf
 HLX,2017-03-29,Advanced Share Registry,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170329/pdf/43h4bkv11p2njf.pdf
+GBZ,2017-03-29,Advanced Share Registry,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170329/pdf/43h47337z4gyv4.pdf
 SXI,2017-03-09,Computershare,Advanced Share Registry,Change to Registry,registry_other,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20170309/pdf/43gp5wfc4z3rtp.pdf
 PSC,2017-02-13,Security Transfer Australia,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170213/pdf/43fyrhncyfdcxh.pdf
 CLQ,2017-02-06,Computershare,Automic,Change of Share Registry Details,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20170206/pdf/43fssqllngzbsz.pdf
+CMM,2017-01-20,Security Transfer Australia,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170120/pdf/43ffpy63kv2txd.pdf
+TEG,2017-01-19,Security Transfer Australia,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170119/pdf/43fdzwdmp41gpw.pdf
+BTC,2017-01-13,Advanced Share Registry,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170113/pdf/43f9d21t7pcd81.pdf
+TPS,2017-01-09,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20170109/pdf/43f6k35wt1bpy2.pdf
 OBL,2016-12-05,Computershare,Automic,Change of Share Registry Details,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20161205/pdf/43dgzhq9z1ss4q.pdf
+AJC,2016-12-02,Boardroom,MUFG Corporate Markets,Change of Share Register,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20161202/pdf/43dfw3jlxps2xn.pdf
 AVX,2016-10-21,Boardroom,Automic,Change of Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20161021/pdf/43c5mw3ng5lpqj.pdf
+NAV,2016-10-10,Automic,Boardroom,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20161010/pdf/43bvcs6z4pcwsw.pdf
 PSY,2016-09-12,Advanced Share Registry,MUFG Corporate Markets,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20160912/pdf/43b3qp0x6nhcv9.pdf
 MYR,2016-08-23,Computershare,MUFG Corporate Markets,Change of Share Registry Manager,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160823/pdf/439jr5xp9xjzl4.pdf
 DDR,2016-07-25,Boardroom,MUFG Corporate Markets,Change of Share Registry Management Services of Dicker Data,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160725/pdf/438s1g2xrct90v.pdf
@@ -598,24 +638,45 @@ BEN,2016-07-15,Computershare,Boardroom,Change of share registry system provider,
 SRH,2016-07-04,Boardroom,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160704/pdf/438bt183r2x04h.pdf
 GRR,2016-06-28,Computershare,Advanced Share Registry,Change of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20160628/pdf/4386561qrsgcvf.pdf
 CTD,2016-06-10,Computershare,MUFG Corporate Markets,Details of Share Registry address,address_only,two_brands,https://announcements.asx.com.au/asxpdf/20160610/pdf/437tkpgxgr5zm9.pdf
+NFE,2016-05-25,Computershare,Automic,Update on Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160525/pdf/437gk77d2mz1wm.pdf
+ACW,2016-05-20,Automic,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160520/pdf/437ckd5vb24vzp.pdf
+NFE,2016-05-18,Computershare,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160518/pdf/437bc2mhd74fvx.pdf
 MEL,2016-05-13,Computershare,Registry Direct,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160513/pdf/43775vgbvmz7xb.pdf
 SGM,2016-05-06,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160506/pdf/43724sx3sswrpn.pdf
+MCT,2016-05-02,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160502/pdf/436yvx54tp72sz.pdf
 ELD,2016-05-02,Computershare,Boardroom,Change of Provider of Share Registry Management Services,registry_other,from_to,https://announcements.asx.com.au/asxpdf/20160502/pdf/436ysnc2xy13hm.pdf
 FOD,2016-04-28,Computershare,Advanced Share Registry,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20160428/pdf/436tnc5y529hvc.pdf
+ARX,2016-04-22,Computershare,Advanced Share Registry,Change of Share Register,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20160422/pdf/436pj93fcgm8f8.pdf
 OEG,2016-04-07,Boardroom,Computershare,Change of Share Registry Details,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20160407/pdf/436chqwz9bvpt1.pdf
+HUB,2016-04-04,Boardroom,MUFG Corporate Markets,Change of share register notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160404/pdf/4368mqfkqzbs2j.pdf
+NST,2016-02-22,Advanced Share Registry,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160222/pdf/4357kzpblnfz06.pdf
 SYR,2016-02-19,Security Transfer Australia,Computershare,Change of Share Registry Details,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20160219/pdf/4355p3y5j2xftt.pdf
+AR1,2016-02-15,Security Transfer Australia,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160215/pdf/4351yr5tn6mxyl.pdf
 NMG,2016-02-09,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160209/pdf/434xshty8qsj40.pdf
+GMR,2016-02-05,Security Transfer Australia,MUFG Corporate Markets,Details of Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160205/pdf/434w10gvjdscq5.pdf
 OSL,2016-01-29,Security Transfer Australia,Boardroom,Notification of change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20160129/pdf/434nhc7yb5mlgt.pdf
 PRU,2016-01-22,Advanced Share Registry,Computershare,Change of share registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160122/pdf/434jpp8gz9rt00.pdf
+GMR,2016-01-21,Security Transfer Australia,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160121/pdf/434j03lkdbwnw3.pdf
+OTC,2016-01-13,Security Transfer Australia,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20160113/pdf/434cd2hcmgys4y.pdf
+WHN,2015-12-21,MUFG Corporate Markets,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20151221/pdf/433z9z951k4zn3.pdf
 ARD,2015-12-21,Security Transfer Australia,Computershare,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20151221/pdf/433yqjvsvbkg57.pdf
 OMT,2015-12-14,MUFG Corporate Markets,Boardroom,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20151214/pdf/433rzzb5j41wy2.pdf
 AKK,2015-12-14,Computershare,Boardroom,Share Registry changed - new address,address_only,from_to,https://announcements.asx.com.au/asxpdf/20151214/pdf/433s30m6gvx866.pdf
 FSI,2015-11-16,Computershare,Boardroom,Details of Share Registry address,address_only,from_to,https://announcements.asx.com.au/asxpdf/20151116/pdf/4330c664mz8582.pdf
+FSI,2015-11-16,Computershare,Boardroom,Letter to Shareholders re share register change,registry_other,from_to,https://announcements.asx.com.au/asxpdf/20151116/pdf/4330dv6j1hmd9q.pdf
 ESR,2015-11-09,Boardroom,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20151109/pdf/432tkp1s5vgrhn.pdf
+FAR,2015-10-28,Advanced Share Registry,Computershare,Change of Share Register Notification - Amendment,provider_change,two_brands,https://announcements.asx.com.au/asxpdf/20151028/pdf/432h3lg39kyl18.pdf
 ESR,2015-10-20,Boardroom,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20151020/pdf/43270pccxm8g8d.pdf
+FAR,2015-08-28,Advanced Share Registry,Computershare,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150828/pdf/430xlf95rq5qvl.pdf
 EGG,2015-08-20,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150820/pdf/430n8050x2pxkb.pdf
 SHP,2015-08-10,Computershare,Boardroom,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20150810/pdf/430df3pp9hgv25.pdf
+MQG,2015-08-04,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150804/pdf/4309d8hbmdd6hc.pdf
+PEL,2015-07-31,Security Transfer Australia,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150731/pdf/430660c2jp9pmm.pdf
+IMU,2015-07-24,Computershare,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150724/pdf/4300gchzx2c0y4.pdf
+RYG,2015-07-17,Computershare,Automic,Change of Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150717/pdf/42zw42dts87r9m.pdf
 SKF,2015-07-13,Security Transfer Australia,Boardroom,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20150713/pdf/42zsbvnwl5lkq1.pdf
+CZL,2015-07-09,Security Transfer Australia,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150709/pdf/42zqhz84ynrk8k.pdf
+GXN,2015-05-29,Advanced Share Registry,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150529/pdf/42ywrxzxjcffvj.pdf
 CL8,2015-05-11,Security Transfer Australia,Boardroom,Change of share registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150511/pdf/42yh7tg2zd4jhb.pdf
 BPH,2015-04-28,Security Transfer Australia,Advanced Share Registry,Update - Share Registry Service Provider Date of Change,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20150428/pdf/42y599d76rypl5.pdf
 MMR,2015-04-28,Security Transfer Australia,Advanced Share Registry,Update - Share Registry Service Provider Date of Change,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20150428/pdf/42y595tp36j1lm.pdf
@@ -625,16 +686,23 @@ BPH,2015-04-07,Security Transfer Australia,Advanced Share Registry,Notice of Cha
 MMR,2015-04-07,Security Transfer Australia,Advanced Share Registry,Notice of Change of Share Registry Services Provider,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20150407/pdf/42xrc8ymp8qb3v.pdf
 AAR,2015-03-12,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,cease_appoint,https://announcements.asx.com.au/asxpdf/20150312/pdf/42x7dwclvvgtj2.pdf
 KKO,2015-03-05,Security Transfer Australia,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150305/pdf/42x31p065szxyw.pdf
+SFN,2015-02-25,Computershare,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150225/pdf/42ww936607h3mj.pdf
 ARU,2015-02-16,Security Transfer Australia,MUFG Corporate Markets,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150216/pdf/42wmty7y8jkcxf.pdf
 CYP,2015-02-13,Security Transfer Australia,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150213/pdf/42wljwkdp85jy0.pdf
 RSL,2015-02-13,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150213/pdf/42wl98q3d4294j.pdf
 AMN,2015-01-20,Boardroom,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150120/pdf/42w2jc0t7mmh90.pdf
 VML,2015-01-09,Security Transfer Australia,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150109/pdf/42vxsglnjwm4yf.pdf
 TAR,2015-01-05,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150105/pdf/42vvfj0qk59qzt.pdf
+SLT,2015-01-05,Security Transfer Australia,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150105/pdf/42vvj54r2pnwrp.pdf
+FRN,2015-01-05,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20150105/pdf/42vvfpb20gm4gc.pdf
 FGX,2014-12-12,Computershare,Boardroom,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20141212/pdf/42vfxg287ns47t.pdf
 QBE,2014-12-01,MUFG Corporate Markets,Computershare,Change to Share Registry and DRP and BSP,registry_other,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20141201/pdf/42v50qpj4wx2f2.pdf
 MEH,2014-12-01,Security Transfer Australia,Boardroom,Share Registry,registry_other,from_to,https://announcements.asx.com.au/asxpdf/20141201/pdf/42v5lf0pdty5s0.pdf
 LER,2014-11-27,Security Transfer Australia,MUFG Corporate Markets,Share registry change,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20141127/pdf/42v1khxnxkvj0n.pdf
+SAT,2014-11-10,Security Transfer Australia,Computershare,Change of Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20141110/pdf/42tm8hnb4pw31r.pdf
+EMG,2014-11-03,Computershare,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20141103/pdf/42tgr2hhh4q83g.pdf
+PNE,2014-10-06,Computershare,Advanced Share Registry,Transfer of Share Register,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20141006/pdf/42sq1sz062b9vl.pdf
+SMR,2014-09-22,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140922/pdf/42sc28p8cpj1bt.pdf
 ICT,2014-09-19,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140919/pdf/42sbgcglt7c9sf.pdf
 AVX,2014-09-12,Computershare,Boardroom,Change of Share Registry Services,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20140912/pdf/42s5xjbr5p3gd2.pdf
 CMT,2014-09-08,Automic,Security Transfer Australia,Change of Share Registry,provider_change,two_brands,https://announcements.asx.com.au/asxpdf/20140908/pdf/42s2b3jrv831fk.pdf
@@ -643,35 +711,57 @@ DAU,2014-08-13,Computershare,Advanced Share Registry,Change of Share Registry,pr
 IGO,2014-08-08,Security Transfer Australia,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140808/pdf/42rcqj26s27d7x.pdf
 STX,2014-08-08,Computershare,Boardroom,Future Share Registry Change,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20140808/pdf/42rckvqt2q1mbd.pdf
 BCK,2014-08-05,Tricor,Computershare,Change of Address of Principal Share Registrar in Bermuda,address_only,two_brands,https://announcements.asx.com.au/asxpdf/20140805/pdf/42r8s75p8hbbpl.pdf
+IOG,2014-07-23,Security Transfer Australia,MUFG Corporate Markets,Details of change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140723/pdf/42qzctkm0hzjc0.pdf
 AGY,2014-07-03,Advanced Share Registry,Automic,Change of Share Registry Details,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20140703/pdf/42qmj0g93nr1l6.pdf
 DAF,2014-07-03,Advanced Share Registry,Automic,Change of Share Registry Details,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20140703/pdf/42qmhkkkk561gx.pdf
+MTA,2014-07-02,Computershare,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140702/pdf/42qllycl6l7fq0.pdf
 KCN,2014-06-30,Security Transfer Australia,MUFG Corporate Markets,Change of Share Registry to Link Market ServicesLimited,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140630/pdf/42qj1x5lc5jwgx.pdf
 TLU,2014-06-26,Boardroom,Computershare,Change of Provider of Share Registry Management Services,registry_other,from_to,https://announcements.asx.com.au/asxpdf/20140626/pdf/42qg8y9yvw7qsp.pdf
 AIV,2014-06-23,Computershare,Boardroom,Details of Share Registry address,address_only,from_to,https://announcements.asx.com.au/asxpdf/20140623/pdf/42qc46gb8mq3zk.pdf
 IPC,2014-06-19,Boardroom,Registry Direct,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20140619/pdf/42q9l873j5rhqt.pdf
 LCE,2014-06-19,Boardroom,Registry Direct,Share Registry Change / Late ANZPB Proceeds,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20140619/pdf/42q9ljt5tkyl27.pdf
+SRQ,2014-06-19,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140619/pdf/42q9drzs21w9hs.pdf
 TEL,2014-06-17,Computershare,MUFG Corporate Markets,Details of Share Registry address,address_only,from_to,https://announcements.asx.com.au/asxpdf/20140617/pdf/42q83ntxxj5mf1.pdf
+AVD,2014-06-11,Advanced Share Registry,Automic,Deferral for Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140611/pdf/42q4x5zky3c3vj.pdf
 TWD,2014-06-05,MUFG Corporate Markets,Computershare,Change in Share Registry Services,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140605/pdf/42q1qg16937v67.pdf
+AVD,2014-05-29,Advanced Share Registry,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140529/pdf/42pxkc3gy96tw0.pdf
 PLS,2014-05-27,Boardroom,Advanced Share Registry,Details of Share Registry address,address_only,from_to,https://announcements.asx.com.au/asxpdf/20140527/pdf/42pw2w1x573y31.pdf
+COT,2014-05-19,Boardroom,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140519/pdf/42ppx8sbsf67jh.pdf
+WGO,2014-05-16,Security Transfer Australia,Boardroom,Change of Share Register,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20140516/pdf/42pnynvt4m30m8.pdf
+CUG,2014-05-02,Computershare,Automic,Change of Share Registry - revised date,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140502/pdf/42pdkcckmrlx70.pdf
+CUG,2014-04-30,Computershare,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140430/pdf/42pb6y5742d8c9.pdf
 ALQ,2014-04-07,Computershare,Boardroom,Letter to Shareholders re Change in Share Registry Provider,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20140407/pdf/42nvgr500563ht.pdf
 ALQ,2014-04-07,Computershare,Boardroom,Change of Share Registry Provider,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20140407/pdf/42nvggfwjx67ld.pdf
+SZG,2014-04-04,Gould Ralph,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140404/pdf/42nttcngj7nk1q.pdf
+BNE,2014-04-01,Security Transfer Australia,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140401/pdf/42nrcxdlhx2mrf.pdf
+SBN,2014-03-20,Computershare,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140320/pdf/42nj8djkd38v62.pdf
 GFL,2014-03-17,MUFG Corporate Markets,Boardroom,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20140317/pdf/42nfxbgjyhv6zy.pdf
 KBC,2014-03-10,MUFG Corporate Markets,Registry Direct,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20140310/pdf/42n8gdfrdpl4yt.pdf
 CKF,2014-02-26,MUFG Corporate Markets,Computershare,Change to Share Registry Services Provider,registry_other,from_to,https://announcements.asx.com.au/asxpdf/20140226/pdf/42n0lqlpn9770z.pdf
+MNE,2014-01-17,Computershare,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140117/pdf/42m5glll1w3p2z.pdf
+CRJ,2014-01-16,Boardroom,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140116/pdf/42m51zcdvpjdr2.pdf
+ORN,2014-01-13,Security Transfer Australia,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140113/pdf/42m2s6xxj6t4rq.pdf
 IMC,2014-01-07,Computershare,Security Transfer Australia,Change of Share Registry Service Provider,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20140107/pdf/42m0kpm6rp7vfq.pdf
 AGY,2013-12-27,Computershare,Advanced Share Registry,Change of Share Registry Details,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20131227/pdf/42lwgxy4tk9tp6.pdf
 EXR,2013-12-18,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20131218/pdf/42lprgkf84xmwj.pdf
 REA,2013-12-02,Computershare,Boardroom,Change of Registry Services Provider to Boardroom,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20131202/pdf/42lb23sd6w5rt3.pdf
 AJC,2013-11-13,Advanced Share Registry,Boardroom,Details of Share Registry address,address_only,from_to,https://announcements.asx.com.au/asxpdf/20131113/pdf/42ktnrpgmz2lnc.pdf
+VOR,2013-11-11,Advanced Share Registry,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20131111/pdf/42krw47rwmymf9.pdf
 LIN,2013-11-08,Computershare,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20131108/pdf/42kqzwd9r9fgdv.pdf
+PDM,2013-11-06,Boardroom,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20131106/pdf/42knx86zdsmp7j.pdf
 TMK,2013-10-25,Advanced Share Registry,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20131025/pdf/42k9znd4p1d2sh.pdf
 CCZ,2013-10-23,Computershare,Automic,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20131023/pdf/42k7zf6pg22ynx.pdf
 ACW,2013-10-18,Computershare,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20131018/pdf/42k4g8g8gmlzy9.pdf
+VIC,2013-10-15,Advanced Share Registry,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20131015/pdf/42k1jnwddlbsw0.pdf
+CXX,2013-09-16,Security Transfer Australia,MUFG Corporate Markets,CHANGE OF SHARE REGISTRY,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20130916/pdf/42jd5694vkrqs8.pdf
 OMI,2013-09-09,MUFG Corporate Markets,Computershare,Change of Share Registry,provider_change,two_brands,https://announcements.asx.com.au/asxpdf/20130909/pdf/42j7g097sy7tsz.pdf
+FRN,2013-09-02,Computershare,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20130902/pdf/42j37b9k3kpndg.pdf
 NME,2013-08-19,Security Transfer Australia,Advanced Share Registry,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20130819/pdf/42hr5t0ngpd96x.pdf
 ORG,2013-08-19,MUFG Corporate Markets,Boardroom,ORG Change of Share Registry Services Provider,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20130819/pdf/42hr2tgckp3h9c.pdf
+GDY,2013-08-09,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20130809/pdf/42hkv19bwbsm5h.pdf
 KRB,2013-07-26,MUFG Corporate Markets,Boardroom,Change of Share Registry Services,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20130726/pdf/42h8kw2gnfhp74.pdf
 PKO,2013-07-24,Security Transfer Australia,Computershare,Change to PKO Share Registry,registry_other,two_brands,https://announcements.asx.com.au/asxpdf/20130724/pdf/42h6w6t2ntlprz.pdf
+BSI,2013-06-27,Computershare,Security Transfer Australia,Transfer of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20130627/pdf/42gqgzm2k6wtyk.pdf
 MSR,2013-06-25,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,cease_appoint,https://announcements.asx.com.au/asxpdf/20130625/pdf/42gnxqrvs7m2vr.pdf
 CLA,2013-06-20,Computershare,Automic,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20130620/pdf/42gl7cvm0jw9w4.pdf
 GML,2013-03-26,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20130326/pdf/42dx13yqgs4t70.pdf
@@ -682,25 +772,37 @@ ABQ,2013-02-14,Computershare,MUFG Corporate Markets,Change of Share Registry,pro
 GRP,2013-02-13,Computershare,Advanced Share Registry,Details of Share Registry address,address_only,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20130213/pdf/42d08wpwwkfyhv.pdf
 IMA,2013-02-08,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,cease_appoint,https://announcements.asx.com.au/asxpdf/20130208/pdf/42cxky20f2qkdk.pdf
 ACP,2013-01-08,Computershare,Advanced Share Registry,Change of share registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20130108/pdf/42cb7z5t2wq18d.pdf
+PNN,2012-10-11,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20121011/pdf/429b7fwckbb60x.pdf
 ORG,2012-07-20,MUFG Corporate Markets,Computershare,Contact Energy Ltd-Notification of Change in Share Registry,provider_change,two_brands,https://announcements.asx.com.au/asxpdf/20120720/pdf/427hxpxsfw8vlr.pdf
 FPH,2012-05-18,Computershare,MUFG Corporate Markets,Change in Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20120518/pdf/426bcgdby2qc2g.pdf
 CLY,2012-05-09,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,cease_appoint,https://announcements.asx.com.au/asxpdf/20120509/pdf/4265ckw74dvrlq.pdf
+SFP,2012-04-20,Registries Limited,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20120420/pdf/425r1p2tvvzp46.pdf
 NAG,2012-03-28,Computershare,Advanced Share Registry,Change of Share Registrar,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20120328/pdf/4259b8nd9lyf69.pdf
 PNE,2012-03-26,Advanced Share Registry,Computershare,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20120326/pdf/4257zpv37x3w9d.pdf
 BOE,2012-03-09,MUFG Corporate Markets,Security Transfer Australia,Change of Share Registry,provider_change,cease_appoint,https://announcements.asx.com.au/asxpdf/20120309/pdf/424y14b400419d.pdf
+ARE,2012-03-05,Boardroom,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20120305/pdf/424tbr0mtsk1h6.pdf
 BOE,2012-02-29,MUFG Corporate Markets,Security Transfer Australia,Change of Share Registry,provider_change,cease_appoint,https://announcements.asx.com.au/asxpdf/20120229/pdf/424q1hpn7xwkvg.pdf
+MNC,2012-02-24,Security Transfer Australia,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20120224/pdf/424lbs94dn2jkd.pdf
+KNL,2012-02-20,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20120220/pdf/424g3mxtkfthrx.pdf
 AGR,2012-02-17,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20120217/pdf/424fg1s8wlh3h6.pdf
+GRP,2012-02-13,Security Transfer Australia,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20120213/pdf/4249l022xpn7zq.pdf
 BMG,2012-01-27,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,cease_appoint,https://announcements.asx.com.au/asxpdf/20120127/pdf/423zcdpyvw531x.pdf
 ANP,2012-01-05,Computershare,Boardroom,Change of Provider of Share Registry Management Services,registry_other,from_to,https://announcements.asx.com.au/asxpdf/20120105/pdf/423mr7nfkzwxyz.pdf
 BCI,2011-12-22,Advanced Share Registry,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20111222/pdf/423gflrdmqz6fr.pdf
 IEC,2011-12-16,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20111216/pdf/423b2bs03kr3jd.pdf
 GRM,2011-12-16,Computershare,Boardroom,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20111216/pdf/4239ygcvt0zcyk.pdf
+WHN,2011-12-09,Advanced Share Registry,MUFG Corporate Markets,Change in Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20111209/pdf/42360wr4b9r45x.pdf
+TPT,2011-11-28,Security Transfer Australia,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20111128/pdf/422wksfzz9pdyq.pdf
 IAU,2011-11-04,Computershare,Advanced Share Registry,Change of Share Registry,provider_change,cease_plus_one,https://announcements.asx.com.au/asxpdf/20111104/pdf/4229xqx25wz34l.pdf
 BMG,2011-11-03,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,cease_appoint,https://announcements.asx.com.au/asxpdf/20111103/pdf/4229j2rl9qns87.pdf
+FNT,2011-09-27,Registries Limited,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20110927/pdf/421brfjl1wb280.pdf
 PTS,2011-09-26,Computershare,Boardroom,Change in Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20110926/pdf/4219qlxmq7bk6q.pdf
 OEG,2011-09-12,Security Transfer Australia,Boardroom,Change of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20110912/pdf/4210m55w1kvqvy.pdf
 EVE,2011-08-05,Computershare,MUFG Corporate Markets,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20110805/pdf/42078sm9q3y36z.pdf
+AFR,2011-08-05,Computershare,MUFG Corporate Markets,Change of Share Registry Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20110805/pdf/42078yg3z64svl.pdf
 GRP,2011-07-07,Computershare,Security Transfer Australia,Details of New Share Registry,provider_change,cease_plus_one,https://announcements.asx.com.au/asxpdf/20110707/pdf/41zn40fmmtz7vv.pdf
+OEL,2011-07-06,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20110706/pdf/41zmvh27jkw0y9.pdf
+RHM,2011-06-17,Security Transfer Australia,Advanced Share Registry,Transfer of Share Register,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20110617/pdf/41z8v617y887tl.pdf
 WAA,2011-06-15,Registries Limited,Boardroom,Share Registry - Change of Business Name,registry_other,two_brands,https://announcements.asx.com.au/asxpdf/20110615/pdf/41z7cxzrtfbpc0.pdf
 WAM,2011-06-15,Registries Limited,Boardroom,Share Registry - Change of Business Name,registry_other,two_brands,https://announcements.asx.com.au/asxpdf/20110615/pdf/41z7cm1pyqnr53.pdf
 WAX,2011-06-15,Registries Limited,Boardroom,Share Registry - Change of Business Name,registry_other,two_brands,https://announcements.asx.com.au/asxpdf/20110615/pdf/41z7d3018vkgyn.pdf
@@ -708,17 +810,23 @@ PLS,2011-06-14,Security Transfer Australia,Registries Limited,Change of Share Re
 MFF,2011-06-08,Registries Limited,Boardroom,Share Registry - Change of Business Name,registry_other,two_brands,https://announcements.asx.com.au/asxpdf/20110608/pdf/41z36jy2d579dq.pdf
 MFG,2011-06-08,Registries Limited,Boardroom,Share Registry - Change of Business Name,registry_other,two_brands,https://announcements.asx.com.au/asxpdf/20110608/pdf/41z36hd2dx6yw9.pdf
 RHC,2011-06-07,Registries Limited,Boardroom,Share Registry - Change of Name to Boardroom Pty Limited,registry_other,from_to,https://announcements.asx.com.au/asxpdf/20110607/pdf/41z2t0gr2ybmm0.pdf
+MRY,2011-06-06,Computershare,MUFG Corporate Markets,Change of Share Register,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20110606/pdf/41z1w5mqhlrm4s.pdf
 ADY,2011-05-30,Computershare,Registries Limited,Change in share registry service provider,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20110530/pdf/41yxtgb742y1m1.pdf
+MRY,2011-05-26,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20110526/pdf/41yw9b7ptfv0k9.pdf
 CVN,2011-05-25,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20110525/pdf/41yvfqvgs9t9v8.pdf
+RMP,2011-04-01,Advanced Share Registry,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20110401/pdf/41xt69513vv1b9.pdf
 AGX,2011-03-23,Computershare,Advanced Share Registry,Change of Share Registry Services,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20110323/pdf/41xmbbl8hzczr7.pdf
 SOL,2011-03-10,Computershare,Advanced Share Registry,New Share Registry Administrator,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20110310/pdf/41xc5711wthdrv.pdf
 WHN,2011-02-02,Gould Ralph,Advanced Share Registry,Change in Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20110202/pdf/41wknpd9nvm86n.pdf
+FMG,2010-11-23,Computershare,MUFG Corporate Markets,Change of Share Register Services,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20101123/pdf/31v2tyx906f0cl.pdf
 APZ,2010-11-19,Computershare,MUFG Corporate Markets,Change of Share Registry Service Provider,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20101119/pdf/31v0lm7kd9kfwc.pdf
 PEN,2010-11-10,Advanced Share Registry,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20101110/pdf/31tsy89lz1shvn.pdf
 SMN,2010-10-20,Advanced Share Registry,Computershare,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20101020/pdf/31t7wjd4kjtg02.pdf
 CRB,2010-10-05,Computershare,Security Transfer Australia,CHANGE OF SHARE REGISTRY,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20101005/pdf/31sydgr2f5chc8.pdf
 OFG,2010-09-03,MUFG Corporate Markets,Computershare,OFG Change of Share Registry,provider_change,two_brands,https://announcements.asx.com.au/asxpdf/20100903/pdf/31sb472j0f53kt.pdf
+TNP,2010-08-27,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20100827/pdf/31s4rqk2n4p0b0.pdf
 ERJ,2010-07-20,MUFG Corporate Markets,Security Transfer Australia,Change of Share Registry,provider_change,two_brands,https://announcements.asx.com.au/asxpdf/20100720/pdf/31rf1brg5zgy0f.pdf
+RFE,2010-06-30,Advanced Share Registry,Security Transfer Australia,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20100630/pdf/31r32w8nz8b1kz.pdf
 CND,2010-06-28,Computershare,Registries Limited,Change of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20100628/pdf/31r1jjxq9tt6l0.pdf
 AIA,2010-06-25,Computershare,MUFG Corporate Markets,Auckland Airport notification of change in share registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20100625/pdf/31r06q82htpqdk.pdf
 BKI,2010-06-22,Computershare,Advanced Share Registry,Change of Share Registry provider,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20100622/pdf/31qylt4frdv38y.pdf
@@ -730,18 +838,24 @@ PIM,2010-05-20,Computershare,Advanced Share Registry,Transfer of Share Registry,
 GED,2010-05-20,Computershare,Advanced Share Registry,Transfer of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20100520/pdf/31qfryrqlv9dr7.pdf
 MLS,2010-05-20,Computershare,Advanced Share Registry,Transfer of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20100520/pdf/31qfrpx8q8sz6l.pdf
 SBR,2010-05-20,Computershare,Advanced Share Registry,Transfer of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20100520/pdf/31qfskdcszcttt.pdf
+CMW,2010-05-17,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20100517/pdf/31qc9wl0j9p556.pdf
 ECQ,2010-04-29,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,cease_appoint,https://announcements.asx.com.au/asxpdf/20100429/pdf/31q19gfnpqby7g.pdf
 MRO,2010-04-19,Registries Limited,Security Transfer Australia,Change of Share Registrar,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20100419/pdf/31pvbmnbtmmzjs.pdf
 CUU,2010-03-01,MUFG Corporate Markets,Computershare,Details of Share Registry address,address_only,two_brands,https://announcements.asx.com.au/asxpdf/20100301/pdf/31p0jch7n3c32g.pdf
 AUI,2010-02-22,Computershare,MUFG Corporate Markets,Change of Provider of Share Registry Management Services,registry_other,from_to,https://announcements.asx.com.au/asxpdf/20100222/pdf/31ntnsf21zznck.pdf
 CFR,2010-02-18,Registries Limited,Advanced Share Registry,Change of Share Registry notification,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20100218/pdf/31nrzgfqddml7f.pdf
+DMP,2010-02-11,Computershare,MUFG Corporate Markets,Change of Share Register,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20100211/pdf/31nn3yhg0mv1f4.pdf
 RHC,2010-01-28,Computershare,Registries Limited,Change of Share Registry Service Provider,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20100128/pdf/31ncplwt5b98hh.pdf
 BRD,2010-01-28,Computershare,Advanced Share Registry,Change of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20100128/pdf/31ncz43f78l0pg.pdf
+WHN,2009-12-10,Computershare,Gould Ralph,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20091210/pdf/31mnnv5kbwbff9.pdf
 PEL,2009-11-16,Computershare,Security Transfer Australia,Change of Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20091116/pdf/31m2m0n1xpq9g0.pdf
 DMY,2009-11-04,Computershare,Advanced Share Registry,Details of Share Registry address,address_only,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20091104/pdf/31lvqpz17r9wyj.pdf
+SRZ,2009-08-25,MUFG Corporate Markets,Registries Limited,Change of Share Register,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20090825/pdf/31k9cqc1s8zj6s.pdf
+AAO,2009-08-10,Computershare,MUFG Corporate Markets,Change of Share Register,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20090810/pdf/31k0rgr8vm3jqg.pdf
 BOE,2009-06-29,Computershare,MUFG Corporate Markets,Change of Share Registry,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20090629/pdf/31j8z3z1bm8g32.pdf
 BOQ,2009-06-29,Computershare,MUFG Corporate Markets,BOQ- Change of Share Registry Details,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20090629/pdf/31j91qkyjshchm.pdf
 AEU,2009-06-26,MUFG Corporate Markets,Registries Limited,Change of Provider of Unit Registry Management Services,registry_other,cease_plus_one,https://announcements.asx.com.au/asxpdf/20090626/pdf/31j83qvsgrf81z.pdf
+GIP,2009-05-12,Computershare,Security Transfer Australia,UK Share Register Transfer Completed,registry_other,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20090512/pdf/31hk3fcf0qzdm8.pdf
 QNL,2009-05-08,Security Transfer Australia,Advanced Share Registry,Change of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20090508/pdf/31hhfwsc9nx06k.pdf
 RDS,2009-04-21,Computershare,Advanced Share Registry,Change of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20090421/pdf/31h56fknm1pyfz.pdf
 GIP,2009-04-06,Security Transfer Australia,Computershare,UK Share Registry Transfer,provider_change,cease_plus_one,https://announcements.asx.com.au/asxpdf/20090406/pdf/31gyf67pksnx2x.pdf
@@ -758,11 +872,13 @@ MHL,2008-11-07,Computershare,Advanced Share Registry,Change of Share and Option 
 GWR,2008-10-29,MUFG Corporate Markets,Advanced Share Registry,Change of Share Registry,provider_change,two_brands,https://announcements.asx.com.au/asxpdf/20081029/pdf/31d7nfzg8gf75l.pdf
 PRR,2008-10-17,Security Transfer Australia,Registries Limited,Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20081017/pdf/31cyp6xfgzddqf.pdf
 CVS,2008-09-24,Computershare,Advanced Share Registry,Change of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20080924/pdf/31ch82cfssylxv.pdf
+PYM,2008-09-22,Advanced Share Registry,MUFG Corporate Markets,Change of Share Register,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20080922/pdf/31cf7x4ycds240.pdf
 CNN,2008-09-15,Computershare,Advanced Share Registry,Change of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20080915/pdf/31c9mh3ys1d8jd.pdf
 EXR,2008-09-01,Advanced Share Registry,Computershare,Details of Share Registry address,address_only,from_to,https://announcements.asx.com.au/asxpdf/20080901/pdf/31c27nldlh76hl.pdf
 BML,2008-08-28,Computershare,Advanced Share Registry,Change of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20080828/pdf/31bzhv3rm669bd.pdf
 DVM,2008-08-12,Computershare,Security Transfer Australia,Change of Share and Option Registry,registry_other,cease_appoint,https://announcements.asx.com.au/asxpdf/20080812/pdf/31bns3wnkrg2yn.pdf
 FTN,2008-07-10,Computershare,Security Transfer Australia,Change of Share Registry,provider_change,cease_appoint,https://announcements.asx.com.au/asxpdf/20080710/pdf/31b3n4dsrzgcp8.pdf
+HWI,2008-07-07,Computershare,MUFG Corporate Markets,Change of Share Register Notification,provider_change,one_brand+prior_doc,https://announcements.asx.com.au/asxpdf/20080707/pdf/31b14r432b19t7.pdf
 JUT,2008-06-19,Security Transfer Australia,Advanced Share Registry,Change of Share Registry,provider_change,appoint_plus_one,https://announcements.asx.com.au/asxpdf/20080619/pdf/319qccphqmdqmn.pdf
 QTI,2008-06-10,Computershare,Registries Limited,Details of Share Registry address,address_only,from_to,https://announcements.asx.com.au/asxpdf/20080610/pdf/319k9x0gq516k3.pdf
 CIW,2008-05-01,MUFG Corporate Markets,Registries Limited,Notification - Change of Share Registry,provider_change,from_to,https://announcements.asx.com.au/asxpdf/20080501/pdf/318x8ps2zk3kk0.pdf

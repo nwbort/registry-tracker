@@ -967,8 +967,12 @@ def cmd_resolve(args: argparse.Namespace) -> int:
     # --reresolve-brand is the same idea keyed on what was found rather than how:
     # tightening one brand's pattern invalidates exactly the documents that
     # matched it, and leaves the rest of the table alone.
+    # `is not None`, not truthiness: the empty string is a real method, meaning
+    # the document was read and no rule fired. Those rows are exactly the ones a
+    # loosened rule should reconsider, and `--reresolve ""` is the only way to
+    # name them.
     redo = ""
-    if args.reresolve:
+    if args.reresolve is not None:
         redo += " OR r.method = ?"
         params.append(args.reresolve)
     if args.reresolve_brand:

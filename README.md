@@ -353,8 +353,8 @@ what `backfill` below is for: it lifts 2010–2014 from 39% to 56% and 2015–20
 76%. It does nothing for 2005–2009, because the documents it would probe are the same
 image-only scans.
 
-Of the 772 pairs that resolve, 529 (69%) come from an explicit "from X to Y" in the text
-and 83 (11%) needed `backfill` for one of their two ends. 43 rest on the weakest
+Of the 888 pairs that resolve, 534 (60%) come from an explicit "from X to Y" in the text
+and 186 (21%) needed `backfill` for one of their two ends. 44 rest on the weakest
 `two_brands` fallback — two registrar names in one document, taken in order of appearance.
 The `method` column keeps all of these apart; do not treat a `two_brands` row as equal
 evidence to a `from_to` one.
@@ -412,10 +412,10 @@ and the `method` column carries the provenance: `one_brand+prior_doc` means the 
 registrar was stated in the notice and the outgoing one came from another filing, whose
 `ids_id` is in `resolution.backfilled_from`.
 
-Over the full market this recovered **83 of 210** one-sided `provider_change` notices from
-194 probed documents — a little over two probes per recovered change. Notices of meeting
-and proxy forms supplied 46 of them and annual reports 35, which is why those two shapes
-lead the pattern; the remaining 3 came from DRP notices and shareholder letters.
+Over the full market this recovered **186 of 247** one-sided `provider_change` notices from
+380 probed documents — about two probes per recovered change. Annual reports supplied 109
+of them and notices of meeting and proxy forms 72, which is why those two shapes lead the
+pattern; the remaining 5 came from DRP notices and shareholder letters.
 
 ### Worked example
 
@@ -430,47 +430,52 @@ ECS    2023-07-24  Computershare       Automic        from_to
 
 ### Full-market results (1,840 codes, 29,921 company-years)
 
-The whole market scanned in 40.4 minutes at 12.3 requests/sec with **zero failed fetches**,
-turning up 2,020 registry-related announcements. All 2,020 PDFs were then fetched; 1,905
-yielded text and 115 were image-only scans, the latest of them from June 2007. `backfill`
-then opened a further 199 ordinary filings to name the side 211 one-sided notices left out.
+The whole market scanned in 53.0 minutes at 9.4 requests/sec with **zero failed fetches**,
+turning up 2,119 registry-related announcements. All 2,119 PDFs were then fetched; 1,977
+yielded text and 142 were image-only scans, the latest of them from June 2007. `backfill`
+then opened a further 380 ordinary filings to name the side 247 one-sided notices left out.
 
-**774 registrar switches across 646 of the 1,840 companies** — so roughly one company in
-three has changed registry at least once in a window the daily tracker could never have
-seen. 684 came from `provider_change` headlines, 48 from `address_only` and 42 from
-`registry_other`: the 90 from non-obvious headlines are what the headline-only approach
+99 of those announcements — 53 of them `provider_change` — exist only because the headline
+rule learned "share register" alongside "share registry". They were never indexed before,
+so no amount of re-resolving would have found them; the market had to be re-scanned.
+
+**888 registrar switches across 729 of the 1,840 companies** — so roughly two companies in
+five have changed registry at least once in a window the daily tracker could never have
+seen. 797 came from `provider_change` headlines, 47 from `address_only` and 44 from
+`registry_other`: the 91 from non-obvious headlines are what the headline-only approach
 would have missed.
 
 Net movement over the resolved history:
 
 | Registrar | Gained | Lost | Net |
 | --- | ---: | ---: | ---: |
-| Automic | 381 | 87 | **+294** |
+| Automic | 415 | 90 | **+325** |
 | Xcend | 45 | 0 | +45 |
-| Registries Limited | 13 | 8 | +5 |
-| Boardroom | 78 | 75 | +3 |
-| Security Transfer Australia | 28 | 69 | −41 |
-| MUFG Corporate Markets | 59 | 148 | **−89** |
-| Advanced Share Registry | 66 | 158 | **−92** |
-| Computershare | 92 | 214 | **−122** |
+| Registries Limited | 14 | 10 | +4 |
+| Boardroom | 83 | 80 | +3 |
+| Registry Direct | 10 | 11 | −1 |
+| MUFG Corporate Markets | 113 | 152 | **−39** |
+| Security Transfer Australia | 35 | 98 | **−63** |
+| Advanced Share Registry | 66 | 178 | **−112** |
+| Computershare | 105 | 266 | **−161** |
 
 This is the picture the daily tracker cannot show: a one-way consolidation into Automic,
 with Xcend picking up 45 clients and losing none. Note the direction of travel is not the
 same as market share — Computershare still holds the large caps (55% of ASX market cap in
-the table above) while shedding small-cap mandates by count. The 83 backfilled rows sharpen
-this rather than redirect it — 66 of them are 2010s switches, leaving mostly Computershare
-(26) and Security Transfer (19) and arriving mostly at MUFG Corporate Markets (29) and
-Automic (24). MUFG is where they change the picture most: its `Gained` column nearly
-doubles, 30 → 59, so the pre-Automic decade of consolidation into what was then Link
-Market Services is largely invisible without them.
+the table above) while shedding small-cap mandates by count. The 186 backfilled rows sharpen
+this rather than redirect it — 156 of them are 2010s switches, leaving mostly Computershare
+(72) and Security Transfer (46) and arriving mostly at MUFG Corporate Markets (80) and
+Automic (55). MUFG is where they change the picture most: without them its `Gained` column
+collapses to 33, so the pre-Automic decade of consolidation into what was then Link Market
+Services is largely invisible.
 
-Switches are heavily concentrated in time: **174 in 2024** against 30-66 in surrounding
+Switches are heavily concentrated in time: **178 in 2024** against 47-70 in surrounding
 years. That spike is not 174 independent decisions — it is dominated by Automic absorbing
 Advanced Share Registry's book over a few days in early March 2024. Bulk transfers of a
 registrar's client list look identical to individual switches in this data, so treat
 same-week clusters as one event.
 
-`data/registry_changes_history.csv` is the flat export of all 774, with the `method` column
+`data/registry_changes_history.csv` is the flat export of all 888, with the `method` column
 so weaker inferences stay visible.
 
 ### Schema (`announcements.sqlite`)
