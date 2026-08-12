@@ -276,9 +276,34 @@ move prints the new registrar's contact details and routinely never says who it 
 a `cease` phrase naming that same registrar flips it to the outgoing side (`one_brand_cease`).
 Reading a "X will cease to act as registrar" notice the default way would invert the change.
 
+Some names are only a registrar in context. `Boardroom` is also an ordinary word — Resource
+Star's 2009 notice of AGM names no registrar at all, but held the meeting at *"The Boardroom,
+Nissen Kestel Harford"* — and `Gadens`, `Gould Ralph` and Steinepreis Paganin (which ran
+GG Registry) are the solicitors and accountants half the small-cap market lists in its
+corporate directory. These brands, in `_NEEDS_REGISTRY_CONTEXT`, only count when a registry
+word sits within 120 characters. "Register" counts, because *"our register is currently
+maintained by Boardroom Pty Limited"* is how a notice names the registrar it is leaving;
+"registered" does not, because "registered holder" is boilerplate in exactly the meeting
+notices the rule exists to exclude. The bare `steinepreis` pattern is gone entirely: in a
+corporate directory the solicitors are listed a line above the share registry, so no
+context window can separate them.
+
+A notice that names a registrar in full and then uses a short form is read through its own
+definitions. Legend Mining's 1 March 2024 notice says the provider *"will change from
+Advanced to Automic"* after defining `Advanced Share Registry Limited ("Advanced")`; with
+the short forms unresolved, the from/to rule saw no brand on either side and the change
+published backwards off the `two_brands` fallback, whose order-of-appearance guess was the
+preamble explaining that Automic had bought Advanced. `_defined_terms` requires an
+expansion to name exactly one registrar, so a lead-in that sweeps up a second brand defines
+nothing rather than defining the alias wrongly.
+
 A stored resolution is otherwise final — the PDF does not change, so re-reading it is a
 wasted request. It stops being final when the extraction rules do:
-`resolve --reresolve one_brand` re-reads the documents an older rule decided.
+`resolve --reresolve one_brand` re-reads the documents an older rule decided, and
+`resolve --reresolve-brand Boardroom` re-reads by what was found rather than by how, which
+is what tightening one brand's pattern invalidates. Rules are covered by
+`python test_brand_rules.py` — stdlib `unittest`, no network, every fixture a fragment of a
+real announcement.
 
 Historical registrars that no longer appear in the live ASX feed (ASX Perpetual Registrars,
 Registries Limited, Security Transfer, White Outsourcing …) are added on top of
@@ -328,8 +353,8 @@ what `backfill` below is for: it lifts 2010–2014 from 39% to 56% and 2015–20
 76%. It does nothing for 2005–2009, because the documents it would probe are the same
 image-only scans.
 
-Of the 774 pairs that resolve, 527 (68%) come from an explicit "from X to Y" in the text
-and 84 (11%) needed `backfill` for one of their two ends. 47 rest on the weakest
+Of the 888 pairs that resolve, 534 (60%) come from an explicit "from X to Y" in the text
+and 186 (21%) needed `backfill` for one of their two ends. 44 rest on the weakest
 `two_brands` fallback — two registrar names in one document, taken in order of appearance.
 The `method` column keeps all of these apart; do not treat a `two_brands` row as equal
 evidence to a `from_to` one.
@@ -365,6 +390,17 @@ Three properties are worth keeping in mind:
 - **The incoming side is only read 45 days out.** A switch is announced before it takes
   effect ("effective Monday, 30 March"), so a document lodged days after the notice may
   still have come from the outgoing registrar.
+- **The candidates are looked up under the company's *current* code.** ASX tickers get
+  recycled, and the archive resolves a query code to one entity — whichever holds it latest
+  — then serves that entity's whole history under every code it has used. So asking about a
+  code its original owner has since given up returns a stranger's filings. Intiger Group
+  lodged its 13 June 2017 change under IAM; IAM now belongs to a company that traded as TAU
+  in 2017, and the archive answers a 2016–17 IAM query with nothing but TAU. Trustees
+  Australia's notice of meeting names Boardroom honestly and as its only registrar, so it
+  looks exactly like the evidence being hunted for — and the register it describes belongs
+  to someone else. `scan` already stores the code it asked about in `announcement.query_code`,
+  which *is* the current code, so `backfill` looks candidates up under that and proves the
+  archive is serving the right entity by checking the notice appears on its own year page.
 
 `address_only` notices are excluded by default: they are one-sided for the honest reason —
 the registrar moved office, so there was only ever one to name — and pairing each with
@@ -376,10 +412,10 @@ and the `method` column carries the provenance: `one_brand+prior_doc` means the 
 registrar was stated in the notice and the outgoing one came from another filing, whose
 `ids_id` is in `resolution.backfilled_from`.
 
-Over the full market this recovered **84 of 211** one-sided `provider_change` notices from
-199 probed documents — a little over two probes per recovered change. Notices of meeting
-and proxy forms supplied 46 of them and annual reports 35, which is why those two shapes
-lead the pattern; the remaining 3 came from DRP notices and shareholder letters.
+Over the full market this recovered **186 of 247** one-sided `provider_change` notices from
+380 probed documents — about two probes per recovered change. Annual reports supplied 109
+of them and notices of meeting and proxy forms 72, which is why those two shapes lead the
+pattern; the remaining 5 came from DRP notices and shareholder letters.
 
 ### Worked example
 
@@ -394,47 +430,52 @@ ECS    2023-07-24  Computershare       Automic        from_to
 
 ### Full-market results (1,840 codes, 29,921 company-years)
 
-The whole market scanned in 40.4 minutes at 12.3 requests/sec with **zero failed fetches**,
-turning up 2,020 registry-related announcements. All 2,020 PDFs were then fetched; 1,905
-yielded text and 115 were image-only scans, the latest of them from June 2007. `backfill`
-then opened a further 199 ordinary filings to name the side 211 one-sided notices left out.
+The whole market scanned in 53.0 minutes at 9.4 requests/sec with **zero failed fetches**,
+turning up 2,119 registry-related announcements. All 2,119 PDFs were then fetched; 1,977
+yielded text and 142 were image-only scans, the latest of them from June 2007. `backfill`
+then opened a further 380 ordinary filings to name the side 247 one-sided notices left out.
 
-**774 registrar switches across 646 of the 1,840 companies** — so roughly one company in
-three has changed registry at least once in a window the daily tracker could never have
-seen. 684 came from `provider_change` headlines, 48 from `address_only` and 42 from
-`registry_other`: the 90 from non-obvious headlines are what the headline-only approach
+99 of those announcements — 53 of them `provider_change` — exist only because the headline
+rule learned "share register" alongside "share registry". They were never indexed before,
+so no amount of re-resolving would have found them; the market had to be re-scanned.
+
+**888 registrar switches across 729 of the 1,840 companies** — so roughly two companies in
+five have changed registry at least once in a window the daily tracker could never have
+seen. 797 came from `provider_change` headlines, 47 from `address_only` and 44 from
+`registry_other`: the 91 from non-obvious headlines are what the headline-only approach
 would have missed.
 
 Net movement over the resolved history:
 
 | Registrar | Gained | Lost | Net |
 | --- | ---: | ---: | ---: |
-| Automic | 381 | 87 | **+294** |
+| Automic | 415 | 90 | **+325** |
 | Xcend | 45 | 0 | +45 |
-| Registries Limited | 13 | 8 | +5 |
-| Boardroom | 78 | 75 | +3 |
-| Security Transfer Australia | 28 | 69 | −41 |
-| MUFG Corporate Markets | 59 | 148 | **−89** |
-| Advanced Share Registry | 66 | 158 | **−92** |
-| Computershare | 92 | 214 | **−122** |
+| Registries Limited | 14 | 10 | +4 |
+| Boardroom | 83 | 80 | +3 |
+| Registry Direct | 10 | 11 | −1 |
+| MUFG Corporate Markets | 113 | 152 | **−39** |
+| Security Transfer Australia | 35 | 98 | **−63** |
+| Advanced Share Registry | 66 | 178 | **−112** |
+| Computershare | 105 | 266 | **−161** |
 
 This is the picture the daily tracker cannot show: a one-way consolidation into Automic,
 with Xcend picking up 45 clients and losing none. Note the direction of travel is not the
 same as market share — Computershare still holds the large caps (55% of ASX market cap in
-the table above) while shedding small-cap mandates by count. The 84 backfilled rows sharpen
-this rather than redirect it — 66 of them are 2010s switches, leaving mostly Computershare
-(26) and Security Transfer (19) and arriving mostly at MUFG Corporate Markets (29) and
-Automic (24). MUFG is where they change the picture most: its `Gained` column nearly
-doubles, 30 → 59, so the pre-Automic decade of consolidation into what was then Link
-Market Services is largely invisible without them.
+the table above) while shedding small-cap mandates by count. The 186 backfilled rows sharpen
+this rather than redirect it — 156 of them are 2010s switches, leaving mostly Computershare
+(72) and Security Transfer (46) and arriving mostly at MUFG Corporate Markets (80) and
+Automic (55). MUFG is where they change the picture most: without them its `Gained` column
+collapses to 33, so the pre-Automic decade of consolidation into what was then Link Market
+Services is largely invisible.
 
-Switches are heavily concentrated in time: **174 in 2024** against 30-66 in surrounding
+Switches are heavily concentrated in time: **178 in 2024** against 47-70 in surrounding
 years. That spike is not 174 independent decisions — it is dominated by Automic absorbing
 Advanced Share Registry's book over a few days in early March 2024. Bulk transfers of a
 registrar's client list look identical to individual switches in this data, so treat
 same-week clusters as one event.
 
-`data/registry_changes_history.csv` is the flat export of all 774, with the `method` column
+`data/registry_changes_history.csv` is the flat export of all 888, with the `method` column
 so weaker inferences stay visible.
 
 ### Schema (`announcements.sqlite`)
@@ -490,7 +531,12 @@ does not re-fetch, and so a failed extraction is recorded rather than retried fo
 
 `probe` — documents `backfill` opened only to see which registrar they name. They say
 nothing about a registry change, so they have no place in `announcement`; the table exists
-so a second backfill run does not re-fetch them.
+so a second backfill run does not re-fetch them. It is a cache of an extraction rule's
+output, so tightening a rule makes every probe that fired on it stale:
+`backfill --reprobe-brand Boardroom` forgets those probes *and* clears the side they
+supplied, putting the notice back to one-sided so it is re-earned rather than keeping an
+answer whose evidence is gone. `backfill --only CODES` bounds a repair to the companies it
+concerns.
 
 | Column | Meaning |
 | --- | --- |
