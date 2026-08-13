@@ -177,6 +177,7 @@ python announcement_history.py scan                   # whole market
 python announcement_history.py resolve                # read the candidate PDFs
 python announcement_history.py backfill               # name the side a notice left out
 python announcement_history.py changes                # resolved switches
+python announcement_history.py tickers                # codes companies have traded under
 python announcement_history.py timeline ECS           # one ticker
 python announcement_history.py export out.csv
 ```
@@ -538,6 +539,40 @@ same-week clusters as one event.
 `data/registry_changes_history.csv` is the flat export of all 905, with the `method` column
 so weaker inferences stay visible.
 
+### Ticker changes
+
+A registrar switch is filed under whatever code the company traded as **that day**, which
+is not necessarily the code it trades as now. 271 of the 905 rows above are in that
+position, and 249 of them name a code that is not in `data/asx_registries.csv` at all — so
+before this existed, joining the two files on `code` silently dropped a quarter of the
+history.
+
+Recovering the renames costs no extra requests, because the scan already recorded both
+halves. The archive resolves any code to one entity and then serves that entity's whole
+history under every code it has used, so an announcement whose released-under `code` differs
+from the `query_code` we asked about *is* a rename, stated by the ASX rather than inferred.
+`tickers` groups those pairs into the `ticker_change` table and
+`data/ticker_changes.csv`: **436 renames across 362 companies**, from 2003 to 2025, 69 of
+those companies having changed code more than once.
+
+Three things it does not claim:
+
+- **It is not a date, it is a bracket.** The rename happened somewhere between the last
+  announcement lodged under the old code and the first under the new one, and this database
+  holds only *registry-related* announcements — a sparse sample of a company's filings. So
+  the bracket is wide, and 241 of the 436 have no upper end at all, the company not having
+  lodged a registry notice under its new code yet.
+- **It is not the full list of ASX renames.** A company reaches this table only by having
+  filed something about its share registry, under a code it has since given up.
+- **The old code is not a key.** ASX recycles codes: 41 of these old codes belong to a
+  different company today, and `AUK` and `EMS` each appear twice because two entities used
+  the code in turn and both later renamed. The primary key is the pair, and
+  `old_code_relisted` flags the 41 so a join does not quietly land on a stranger — the same
+  hazard `backfill` guards against by looking candidates up under `query_code`.
+
+The safe direction is current → old: `current_code` is unambiguous, which is why `export`
+now carries it as its own column alongside the released-under `code`.
+
 ### Schema (`announcements.sqlite`)
 
 Separate database from `registry.sqlite` — the daily tracker's state is unaffected by
@@ -615,6 +650,20 @@ with genuinely no announcements is distinguishable from one never scanned.
 | `code`, `year` | composite PK |
 | `scanned_at` | when it was fetched |
 | `found` | total announcements on that page, before registry filtering |
+
+`ticker_change` — renames, derived from `announcement` and nothing else. `tickers` drops and
+rewrites it rather than upserting, because a rescan can retract a pair: re-indexing a year
+under a recycled code reassigns its announcements to the code's current owner, and an upsert
+would leave the old pair behind as a fact nothing supports any more.
+
+| Column | Meaning |
+| --- | --- |
+| `old_code`, `current_code` | composite PK — the old code alone is not unique |
+| `old_last_seen` | last announcement lodged under the old code |
+| `current_first_seen` | first lodged under the new one; NULL for 241 of 436 — the rename is bracketed on one side only |
+| `announcements` | how many announcements carry the old code — 1 is a single sighting, not a weaker claim |
+| `old_code_relisted` | 1 if another company trades under the old code today |
+| `derived_at` | when the table was last rebuilt |
 
 A registrar switch is `old_registry IS NOT NULL AND new_registry IS NOT NULL AND
 old_registry <> new_registry` — that is what `changes` and `export` select, and it draws

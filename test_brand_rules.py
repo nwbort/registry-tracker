@@ -1,17 +1,21 @@
 """Regression tests for the registrar-name rules in announcement_history.
 
-No network and no database: every fixture is a fragment of a real announcement,
-trimmed to the sentence the rule turns on. Run with `python test_brand_rules.py`.
+No network and nothing on disk: every fixture is a fragment of a real
+announcement, trimmed to the sentence the rule turns on, and the one test class
+that needs a database builds it in memory. Run with `python test_brand_rules.py`.
 """
 
+import sqlite3
 import unittest
 
 from announcement_history import (
     CLASS_ADDRESS,
     CLASS_OTHER,
     CLASS_PROVIDER,
+    SCHEMA,
     _find_brands,
     classify_headline,
+    derive_ticker_changes,
     resolve_registrars,
     strip_watermark,
 )
@@ -224,6 +228,74 @@ class Resolution(unittest.TestCase):
         )
         self.assertIsNone(res.old)
         self.assertIsNone(res.new)
+
+
+class TickerChanges(unittest.TestCase):
+    """Renames read back out of the announcements, in memory - no file on disk."""
+
+    def setUp(self):
+        self.conn = sqlite3.connect(":memory:")
+        self.conn.row_factory = sqlite3.Row
+        self.conn.executescript(SCHEMA)
+
+    def add(self, ids_id, code, query_code, date):
+        self.conn.execute(
+            "INSERT INTO announcement (ids_id, code, query_code, date, headline, "
+            "classification, year) VALUES (?,?,?,?,?,?,?)",
+            (ids_id, code, query_code, date, "Change of Share Registry",
+             CLASS_PROVIDER, int(date[:4])),
+        )
+
+    def derive(self, current_codes=frozenset()):
+        derive_ticker_changes(self.conn, set(current_codes), "2026-08-13T00:00:00")
+        return {
+            (r["old_code"], r["current_code"]): r
+            for r in self.conn.execute("SELECT * FROM ticker_change")
+        }
+
+    def test_a_differing_released_under_code_is_a_rename(self):
+        # Advance Metals lodged under ASE in 2025; the archive serves it back
+        # when asked about VMS, which is what the company trades as now.
+        self.add("1", "ASE", "VMS", "2025-07-14")
+        self.add("2", "VMS", "VMS", "2026-03-02")
+        row = self.derive()[("ASE", "VMS")]
+        self.assertEqual(row["old_last_seen"], "2025-07-14")
+        self.assertEqual(row["current_first_seen"], "2026-03-02")
+        self.assertEqual(row["announcements"], 1)
+
+    def test_a_company_that_never_renamed_produces_no_row(self):
+        self.add("1", "BHP", "BHP", "2020-01-01")
+        self.assertEqual(self.derive(), {})
+
+    def test_the_bounds_are_the_widest_the_announcements_support(self):
+        self.add("1", "TI1", "AEU", "2019-05-05")
+        self.add("2", "TI1", "AEU", "2021-02-19")
+        self.add("3", "AEU", "AEU", "2022-11-01")
+        row = self.derive()[("TI1", "AEU")]
+        self.assertEqual(
+            (row["old_last_seen"], row["current_first_seen"], row["announcements"]),
+            ("2021-02-19", "2022-11-01", 2),
+        )
+
+    def test_an_old_code_someone_else_now_trades_under_is_flagged(self):
+        # AEU was Australian Education Trust's before CQE; it belongs to a
+        # different company today, so a join on the old code lands on a stranger.
+        self.add("1", "AEU", "CQE", "2009-06-26")
+        self.add("2", "TI1", "AEU", "2021-02-19")
+        rows = self.derive(current_codes={"AEU", "CQE"})
+        self.assertEqual(rows[("AEU", "CQE")]["old_code_relisted"], 1)
+        self.assertEqual(rows[("TI1", "AEU")]["old_code_relisted"], 0)
+
+    def test_rebuilding_retracts_a_pair_the_evidence_no_longer_supports(self):
+        self.add("1", "IAM", "TAU", "2017-06-13")
+        self.assertIn(("IAM", "TAU"), self.derive())
+        # A rescan reassigns that announcement to whoever holds the code now.
+        self.conn.execute("UPDATE announcement SET query_code = 'IAM' WHERE ids_id = '1'")
+        self.assertEqual(self.derive(), {})
+
+    def test_rows_from_before_query_code_existed_are_not_renames(self):
+        self.add("1", "ECS", "", "2026-07-30")
+        self.assertEqual(self.derive(), {})
 
 
 if __name__ == "__main__":
