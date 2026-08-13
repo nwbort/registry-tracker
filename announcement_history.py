@@ -38,6 +38,7 @@ Usage:
     python announcement_history.py resolve                # read candidate PDFs
     python announcement_history.py backfill               # name the unnamed side
     python announcement_history.py changes                # resolved registrar switches
+    python announcement_history.py tickers                # codes companies have traded under
     python announcement_history.py timeline ECS           # one ticker's history
     python announcement_history.py export out.csv
 """
@@ -856,6 +857,29 @@ CREATE TABLE IF NOT EXISTS probe (
     ok         INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_probe_code ON probe(code, date);
+
+-- Ticker renames, derived wholesale from `announcement` rather than fetched.
+-- The archive serves a company's whole history under every code it has used, so
+-- an announcement whose released-under code differs from the code we queried is
+-- a rename: `code` is what the company traded as then, `query_code` what it
+-- trades as now. Rebuilt by `tickers`, never appended to.
+CREATE TABLE IF NOT EXISTS ticker_change (
+    old_code            TEXT NOT NULL,
+    current_code        TEXT NOT NULL,
+    -- Bounds, not a date: the rename happened somewhere between the last
+    -- announcement lodged under the old code and the first under the new one.
+    -- Both come from the registry-related announcements this database indexes,
+    -- which are a sparse sample of a company's filings, so the gap is wide and
+    -- either end can be NULL.
+    old_last_seen       TEXT,
+    current_first_seen  TEXT,
+    announcements       INTEGER NOT NULL,
+    -- 1 if some other company trades under the old code today. ASX recycles
+    -- codes, so joining on `old_code` alone can land on a stranger.
+    old_code_relisted   INTEGER NOT NULL DEFAULT 0,
+    derived_at          TEXT NOT NULL,
+    PRIMARY KEY (old_code, current_code)
+);
 """
 
 
@@ -904,6 +928,59 @@ def save_announcements(conn: sqlite3.Connection, items: list[Announcement]) -> i
     return len(rows)
 
 
+# One row per (old code, current code) the scan has evidence for, with the last
+# announcement lodged under the old code. Rows written before `query_code`
+# existed hold '' and cannot say anything about a rename, so they drop out.
+_RENAMES_SQL = """
+SELECT code AS old_code, query_code AS current_code,
+       MAX(date) AS old_last_seen, COUNT(*) AS announcements
+FROM announcement
+WHERE query_code <> '' AND code <> query_code
+GROUP BY code, query_code
+"""
+
+# The other end of the bound: the earliest announcement a company lodged under
+# the code it trades under now.
+_FIRST_UNDER_CURRENT_SQL = """
+SELECT query_code, MIN(date) AS first_seen
+FROM announcement
+WHERE query_code <> '' AND code = query_code
+GROUP BY query_code
+"""
+
+
+def derive_ticker_changes(
+    conn: sqlite3.Connection, current_codes: set[str], now: str
+) -> int:
+    """Rebuild `ticker_change` from what `announcement` already holds.
+
+    Pure derivation - no archive requests. The table is dropped and rewritten
+    rather than upserted, because a rescan can retract a pair: re-indexing a
+    year under a code that has since been recycled reassigns its announcements
+    to the new owner, and an upsert would leave the old pair behind as a fact
+    nothing supports any more.
+    """
+    first_seen = {
+        row["query_code"]: row["first_seen"]
+        for row in conn.execute(_FIRST_UNDER_CURRENT_SQL)
+    }
+    rows = [
+        (r["old_code"], r["current_code"], r["old_last_seen"],
+         first_seen.get(r["current_code"]), r["announcements"],
+         int(r["old_code"] in current_codes), now)
+        for r in conn.execute(_RENAMES_SQL)
+    ]
+    conn.execute("DELETE FROM ticker_change")
+    conn.executemany(
+        "INSERT INTO ticker_change (old_code, current_code, old_last_seen, "
+        "current_first_seen, announcements, old_code_relisted, derived_at) "
+        "VALUES (?,?,?,?,?,?,?)",
+        rows,
+    )
+    conn.commit()
+    return len(rows)
+
+
 # --------------------------------------------------------------------------
 # Commands
 # --------------------------------------------------------------------------
@@ -938,6 +1015,26 @@ def _load_codes(args: argparse.Namespace) -> list[tuple[str, int]]:
     if args.limit:
         out = out[: args.limit]
     return out
+
+
+def _current_codes(conn: sqlite3.Connection, universe: Path) -> set[str]:
+    """Codes listed on the ASX today.
+
+    The daily tracker's export is the authority. Falling back to the crawl
+    universe when it is missing is close but not identical - `scanned` records
+    what was listed when the scan ran, so a code delisted since then still
+    counts as taken.
+    """
+    if universe.exists():
+        with universe.open(newline="", encoding="utf-8") as fh:
+            codes = {
+                (row.get("code") or "").strip().upper()
+                for row in csv.DictReader(fh)
+            }
+        codes.discard("")
+        if codes:
+            return codes
+    return {row["code"] for row in conn.execute("SELECT DISTINCT code FROM scanned")}
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
@@ -1383,7 +1480,8 @@ def cmd_backfill(args: argparse.Namespace) -> int:
 
 
 _CHANGES_SQL = """
-SELECT a.code, a.date, a.headline, a.classification,
+SELECT a.code, COALESCE(NULLIF(a.query_code, ''), a.code) AS current_code,
+       a.date, a.headline, a.classification,
        r.old_registry, r.new_registry, r.method, r.brands, r.pdf_url
 FROM announcement a
 JOIN resolution r ON r.ids_id = a.ids_id
@@ -1433,6 +1531,54 @@ def cmd_timeline(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_tickers(args: argparse.Namespace) -> int:
+    conn = connect(args.db)
+    n = derive_ticker_changes(
+        conn, _current_codes(conn, Path(args.universe)),
+        datetime.now().isoformat(timespec="seconds"),
+    )
+    if not n:
+        print("no ticker changes in this database - run `scan` first")
+        return 0
+    rows = list(
+        conn.execute(
+            "SELECT * FROM ticker_change ORDER BY old_last_seen DESC, old_code"
+        )
+    )
+    companies = len({r["current_code"] for r in rows})
+    relisted = sum(r["old_code_relisted"] for r in rows)
+    print(
+        f"\n{n} ticker changes across {companies} companies "
+        f"({relisted} old codes since relisted)\n"
+    )
+    print(f"{'OLD':5s} {'NOW':5s} {'LAST AS OLD':12s} {'FIRST AS NEW':12s} ANNS")
+    for r in rows[: args.limit or len(rows)]:
+        flag = " *" if r["old_code_relisted"] else ""
+        print(
+            f"{r['old_code']:5s} {r['current_code']:5s} "
+            f"{(r['old_last_seen'] or '-'):12s} {(r['current_first_seen'] or '-'):12s} "
+            f"{r['announcements']:4d}{flag}"
+        )
+    if relisted:
+        print("\n* another company trades under that code today")
+    if args.export:
+        out = Path(args.export)
+        with out.open("w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh)
+            w.writerow(
+                ["old_code", "current_code", "old_last_seen", "current_first_seen",
+                 "announcements", "old_code_relisted"]
+            )
+            for r in sorted(rows, key=lambda r: (r["current_code"], r["old_code"])):
+                w.writerow(
+                    [r["old_code"], r["current_code"], r["old_last_seen"],
+                     r["current_first_seen"], r["announcements"],
+                     r["old_code_relisted"]]
+                )
+        print(f"\nwrote {len(rows)} rows to {out}")
+    return 0
+
+
 def cmd_export(args: argparse.Namespace) -> int:
     conn = connect(args.db)
     rows = list(conn.execute(_CHANGES_SQL))
@@ -1440,12 +1586,13 @@ def cmd_export(args: argparse.Namespace) -> int:
     with out.open("w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
         w.writerow(
-            ["code", "announced_on", "old_registry", "new_registry",
+            ["code", "current_code", "announced_on", "old_registry", "new_registry",
              "headline", "classification", "method", "pdf_url"]
         )
         for r in rows:
             w.writerow(
-                [r["code"], r["date"], r["old_registry"], r["new_registry"],
+                [r["code"], r["current_code"], r["date"],
+                 r["old_registry"], r["new_registry"],
                  r["headline"], r["classification"], r["method"], r["pdf_url"]]
             )
     print(f"wrote {len(rows)} rows to {out}")
@@ -1543,6 +1690,14 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("changes", help="resolved registrar switches")
     s.add_argument("--limit", type=int)
     s.set_defaults(func=cmd_changes)
+
+    s = sub.add_parser("tickers", help="rebuild and show the ticker rename table")
+    s.add_argument("--export", metavar="PATH", help="also write the table to CSV")
+    s.add_argument("--universe", default="data/asx_registries.csv",
+                   help="CSV of currently listed codes, used to flag old codes "
+                        "another company has since taken over")
+    s.add_argument("--limit", type=int)
+    s.set_defaults(func=cmd_tickers)
 
     s = sub.add_parser("timeline", help="one ticker's registry announcements")
     s.add_argument("code")
