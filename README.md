@@ -325,6 +325,36 @@ The alias lives in `announcement_history.py` and is applied *after*
 deliberate: the tracker's pattern also matches `mps market` and `market place`, which need
 not be MUFG at all, and the daily change alerts key off those names.
 
+### The watermark, and why `ok` lied about it
+
+The ASX stamps **"For personal use only"** down the side of the announcements it serves.
+It is a rotated text layer the exchange adds, not part of the lodged document, and pdfminer
+reads it back one character per line in an order that is neither the phrase nor a clean
+reversal of it:
+
+```
+l\n\ny\nn\no\ne\ns\nu\n\nl\n\na\nn\no\ns\nr\ne\np\nr\no\nF
+```
+
+On an **image-only scan it is the only text on the page**, which made the scan
+indistinguishable from a letter that was read and found to name no registrar: 55 characters
+of text, `ok = 1`, no brands. That is why `ok = 0` used to stop in 2007 — not because the
+ASX stopped serving scans, but because it started watermarking them. Champion Iron's
+12 January 2024 change of registrar sat in that gap, and so did eight other modern scans.
+`strip_watermark()` takes the stamp out before anything reads the text, matching it on
+*the letters* rather than their order — a run of isolated single characters holding exactly
+the letters of the phrase is the stamp whichever way the page was rotated, and is not
+something running text produces.
+
+The stamp also lands wherever the page's text order puts it, routinely mid-sentence, where
+its 35 characters count against the 120-character windows the from/to, cease and
+registry-context rules search in. Re-resolving the 168 documents decided by those
+proximity rules changed none of them, so in this archive the damage was confined to the
+scans — but the windows are what the rule is there to protect, and the
+`test_stamp_does_not_push_a_registrar_out_of_its_context` fixture is a real one it breaks.
+The 951 `one_brand` and 534 `from_to` documents have not been re-read; the stamp cannot
+hide a name from `_find_brands`, only from the words around it.
+
 ### How far back it actually works
 
 Three separate limits, worth keeping apart because they have different fixes:
@@ -332,36 +362,37 @@ Three separate limits, worth keeping apart because they have different fixes:
 1. **The announcement index** parses cleanly back to 1998. So the *date* a company changed
    registry is recoverable across the whole archive, always.
 2. **Before about 2010 the PDFs are image-only scans.** pdfminer returns nothing usable, so
-   the registrars cannot be read without OCR. This is entirely a pre-2010 problem — from
-   2010 onward every PDF in the full-market run yielded text.
-3. **A readable PDF may still name only one registrar.** Plenty of letters say "we have
-   appointed X" without naming who they left. That, not scanning, is what caps the 2010s.
+   the registrars cannot be read *out of the notice* without OCR. They can still be read out
+   of the filings either side of it — see `backfill` below, which is what lifts 2005–2009
+   off the floor.
+3. **A readable PDF may still name one registrar or none.** Plenty of letters say "we have
+   appointed X" without naming who they left, and plenty of others describe the change
+   without naming either end. That, not scanning, is what caps the 2010s.
 
-Measured over the full market (1,840 codes, 29,921 company-years), across the
+Measured over the full market (1,840 codes, 29,921 company-years), across the 942
 `provider_change` notices:
 
 | Era | PDFs readable | Pair from the notice alone | Pair after `backfill` |
 | --- | --- | ---: | ---: |
 | before 2005 | 0 / 26 | 0 / 26 | 0 / 26 |
-| 2005–2009 | 38 / 65 | 21 / 65 (32%) | 23 / 65 (35%) |
-| 2010–2014 | 153 / 153 | 59 / 153 (39%) | 85 / 153 (**56%**) |
-| 2015–2019 | 209 / 209 | 118 / 209 (56%) | 158 / 209 (**76%**) |
-| 2020+ | 436 / 436 | 402 / 436 (92%) | 418 / 436 (**96%**) |
+| 2005–2009 | 44 / 74 | 21 / 74 (28%) | 30 / 74 (**40%**) |
+| 2010–2014 | 169 / 169 | 62 / 169 (36%) | 138 / 169 (**81%**) |
+| 2015–2019 | 228 / 228 | 124 / 228 (54%) | 215 / 228 (**94%**) |
+| 2020+ | 442 / 445 | 404 / 445 (90%) | 431 / 445 (**96%**) |
 
-So OCR would only buy back the pre-2010 rows — and limit 3, the one that caps the 2010s, is
-what `backfill` below is for: it lifts 2010–2014 from 39% to 56% and 2015–2019 from 56% to
-76%. It does nothing for 2005–2009, because the documents it would probe are the same
-image-only scans.
+OCR would now only buy back the pre-2005 rows, where the surrounding filings are scans too
+and there is nothing to probe. Everywhere else the cap is limit 3, which is what `backfill`
+is for: it lifts 2010–2014 from 36% to 81% and 2015–2019 from 54% to 94%.
 
-Of the 888 pairs that resolve, 534 (60%) come from an explicit "from X to Y" in the text
-and 186 (21%) needed `backfill` for one of their two ends. 44 rest on the weakest
+Of the 905 pairs that resolve, 534 (59%) come from an explicit "from X to Y" in the text
+and 203 (22%) needed `backfill` for one of their two ends or both. 44 rest on the weakest
 `two_brands` fallback — two registrar names in one document, taken in order of appearance.
 The `method` column keeps all of these apart; do not treat a `two_brands` row as equal
 evidence to a `from_to` one.
 
 `resolution.ok = 0` means the PDF was an image-only scan, not that parsing failed.
 
-### Naming the side the notice leaves out (`backfill`)
+### Naming the sides the notice leaves out (`backfill`)
 
 A change with one end is not a change: `changes` and `export` both require `old_registry`
 and `new_registry`, so a notice that names only where the register went is dropped
@@ -378,13 +409,31 @@ notice, and the incoming one out of the oldest lodged well after it. For SNG tha
 proxy form of 16 September 2025, which names Automic, and the change becomes
 `Automic → Computershare`.
 
-Three properties are worth keeping in mind:
+**A notice that names neither registrar is the same problem twice, not a different one.**
+Champion Iron (CIA) lodged *"Change of Share Registrar"* on 12 January 2024 as an image-only
+scan — nothing readable in it at all. Its 2023 notice of meeting names Automic and its
+FY2024 annual report names Computershare, so the change is `Automic → Computershare` on
+evidence of exactly the kind `backfill` already trusts, and its `method` is
+`prior_doc+next_doc` with both source ids in `backfilled_from`. Requiring the notice to
+have named at least one end wrote off every scan in the archive as unrecoverable without
+OCR, along with every readable letter that described a change without naming either side —
+84 `provider_change` notices between them, 17 of which turned out to be recoverable
+switches.
 
-- **It is evidence, not inference.** If the probed document names the *same* registrar the
-  notice does, the register did not move and nothing is written. That is what should happen
-  to the address notices that reach `provider_change` on a headline typo — `Change of
-  Registry **Addresss** Notification` misses the `\baddress\b` filter — so those cost a
-  request and produce no false switch.
+Both ends are answered from one set of index pages, so a notice missing both costs three
+years indexed rather than four. Nothing is written unless *both* ends end up known: a run
+that names one side and not the other leaves the row alone, so a later run with more
+`--probes` finishes the job rather than inheriting half of it, and `backfilled_from`
+keeps meaning "this row is complete, stop probing it".
+
+Four properties are worth keeping in mind:
+
+- **It is evidence, not inference.** If the two ends come out the same — the probed document
+  naming the registrar the notice already named, or the two probes naming each other — the
+  register did not move and nothing is written. That is what should happen to the address
+  notices that reach `provider_change` on a headline typo — `Change of Registry
+  **Addresss** Notification` misses the `\baddress\b` filter — so those cost a request and
+  produce no false switch. Over the full market 27 notices ended this way.
 - **A document naming two registrars is skipped**, not guessed at. Dual-listed companies
   print both their Australian and their overseas registrar.
 - **The incoming side is only read 45 days out.** A switch is announced before it takes
@@ -407,15 +456,24 @@ the registrar moved office, so there was only ever one to name — and pairing e
 whatever came before would manufacture a change out of a non-event. `--include-other` opens
 the `registry_other` bucket as well.
 
+**Probing both sides is restricted to `provider_change` headlines**, even under
+`--include-other`. With one end stated the notice anchors the probe: the other end has to
+differ from a registrar the document itself named. With neither end stated, the only thing
+asserting that a change happened at all is the headline — and `Share register update`, the
+`registry_other` shape, does not assert it. Two probes either side of one of those would
+date whatever the company's next real switch was to the wrong announcement.
+
 Probed documents are recorded in a `probe` table so a second run does not re-fetch them,
 and the `method` column carries the provenance: `one_brand+prior_doc` means the incoming
-registrar was stated in the notice and the outgoing one came from another filing, whose
-`ids_id` is in `resolution.backfilled_from`.
+registrar was stated in the notice and the outgoing one came from another filing;
+`prior_doc+next_doc` means the notice named neither and both came from other filings. The
+`ids_id` of each is in `resolution.backfilled_from`, one per side supplied.
 
-Over the full market this recovered **186 of 247** one-sided `provider_change` notices from
-380 probed documents — about two probes per recovered change. Annual reports supplied 109
-of them and notices of meeting and proxy forms 72, which is why those two shapes lead the
-pattern; the remaining 5 came from DRP notices and shareholder letters.
+Over the full market this completed **203 `provider_change` notices** — 186 that named one
+registrar and 17 that named none — from 701 probed documents. 212 of those probes are what
+the answers actually rest on: annual reports supplied 123 of them and notices of meeting
+and proxy forms 84, which is why those two shapes lead the pattern; the remaining 5 came
+from DRP notices and shareholder letters.
 
 ### Worked example
 
@@ -431,17 +489,19 @@ ECS    2023-07-24  Computershare       Automic        from_to
 ### Full-market results (1,840 codes, 29,921 company-years)
 
 The whole market scanned in 53.0 minutes at 9.4 requests/sec with **zero failed fetches**,
-turning up 2,119 registry-related announcements. All 2,119 PDFs were then fetched; 1,977
-yielded text and 142 were image-only scans, the latest of them from June 2007. `backfill`
-then opened a further 380 ordinary filings to name the side 247 one-sided notices left out.
+turning up 2,119 registry-related announcements. All 2,119 PDFs were then fetched; 1,968
+yielded text and 151 were image-only scans — 142 of them before June 2007 and 9 modern ones
+that only became visible as scans once the watermark stopped counting as text. `backfill`
+then opened 701 ordinary filings against the 331 `provider_change` notices that named fewer
+than two registrars, completing 203 of them.
 
 99 of those announcements — 53 of them `provider_change` — exist only because the headline
 rule learned "share register" alongside "share registry". They were never indexed before,
 so no amount of re-resolving would have found them; the market had to be re-scanned.
 
-**888 registrar switches across 729 of the 1,840 companies** — so roughly two companies in
+**905 registrar switches across 741 of the 1,840 companies** — so roughly two companies in
 five have changed registry at least once in a window the daily tracker could never have
-seen. 797 came from `provider_change` headlines, 47 from `address_only` and 44 from
+seen. 814 came from `provider_change` headlines, 47 from `address_only` and 44 from
 `registry_other`: the 91 from non-obvious headlines are what the headline-only approach
 would have missed.
 
@@ -449,33 +509,33 @@ Net movement over the resolved history:
 
 | Registrar | Gained | Lost | Net |
 | --- | ---: | ---: | ---: |
-| Automic | 415 | 90 | **+325** |
+| Automic | 422 | 92 | **+330** |
 | Xcend | 45 | 0 | +45 |
 | Registries Limited | 14 | 10 | +4 |
-| Boardroom | 83 | 80 | +3 |
-| Registry Direct | 10 | 11 | −1 |
-| MUFG Corporate Markets | 113 | 152 | **−39** |
-| Security Transfer Australia | 35 | 98 | **−63** |
-| Advanced Share Registry | 66 | 178 | **−112** |
-| Computershare | 105 | 266 | **−161** |
+| Boardroom | 84 | 83 | +1 |
+| Registry Direct | 11 | 11 | 0 |
+| MUFG Corporate Markets | 116 | 154 | **−38** |
+| Security Transfer Australia | 37 | 100 | **−63** |
+| Advanced Share Registry | 68 | 180 | **−112** |
+| Computershare | 106 | 272 | **−166** |
 
 This is the picture the daily tracker cannot show: a one-way consolidation into Automic,
 with Xcend picking up 45 clients and losing none. Note the direction of travel is not the
 same as market share — Computershare still holds the large caps (55% of ASX market cap in
-the table above) while shedding small-cap mandates by count. The 186 backfilled rows sharpen
-this rather than redirect it — 156 of them are 2010s switches, leaving mostly Computershare
-(72) and Security Transfer (46) and arriving mostly at MUFG Corporate Markets (80) and
-Automic (55). MUFG is where they change the picture most: without them its `Gained` column
+the table above) while shedding small-cap mandates by count. The 203 backfilled rows sharpen
+this rather than redirect it — 167 of them are 2010s switches, leaving mostly Computershare
+(78) and Security Transfer (48) and arriving mostly at MUFG Corporate Markets (83) and
+Automic (62). MUFG is where they change the picture most: without them its `Gained` column
 collapses to 33, so the pre-Automic decade of consolidation into what was then Link Market
 Services is largely invisible.
 
-Switches are heavily concentrated in time: **178 in 2024** against 47-70 in surrounding
-years. That spike is not 174 independent decisions — it is dominated by Automic absorbing
+Switches are heavily concentrated in time: **180 in 2024** against 42-67 in surrounding
+years. That spike is not 180 independent decisions — it is dominated by Automic absorbing
 Advanced Share Registry's book over a few days in early March 2024. Bulk transfers of a
 registrar's client list look identical to individual switches in this data, so treat
 same-week clusters as one event.
 
-`data/registry_changes_history.csv` is the flat export of all 888, with the `method` column
+`data/registry_changes_history.csv` is the flat export of all 905, with the `method` column
 so weaker inferences stay visible.
 
 ### Schema (`announcements.sqlite`)
@@ -523,20 +583,20 @@ does not re-fetch, and so a failed extraction is recorded rather than retried fo
 | `pdf_url` | resolved `announcements.asx.com.au` link |
 | `old_registry` | outgoing registrar, canonical, NULL if not determined |
 | `new_registry` | incoming registrar, canonical, NULL if not determined |
-| `method` | which rule fired — `from_to` is strongest, `two_brands` weakest; a `+prior_doc` / `+next_doc` suffix means `backfill` supplied that side |
+| `method` | which rule fired — `from_to` is strongest, `two_brands` weakest; a `prior_doc` / `next_doc` part means `backfill` supplied that side, and `prior_doc+next_doc` alone means the notice supplied neither |
 | `brands` | every registrar named in the document, comma separated |
 | `resolved_at` | when the PDF was read |
 | `ok` | 1 if text was extractable — 0 means an image-only scan |
-| `backfilled_from` | `ids_id` of the unrelated announcement a missing side was read out of, NULL if both sides came from the notice |
+| `backfilled_from` | `ids_id` of the unrelated announcement a missing side was read out of — one per side supplied, comma separated, so a notice that named neither registrar carries two. NULL if the notice named both |
 
 `probe` — documents `backfill` opened only to see which registrar they name. They say
 nothing about a registry change, so they have no place in `announcement`; the table exists
 so a second backfill run does not re-fetch them. It is a cache of an extraction rule's
 output, so tightening a rule makes every probe that fired on it stale:
-`backfill --reprobe-brand Boardroom` forgets those probes *and* clears the side they
-supplied, putting the notice back to one-sided so it is re-earned rather than keeping an
-answer whose evidence is gone. `backfill --only CODES` bounds a repair to the companies it
-concerns.
+`backfill --reprobe-brand Boardroom` forgets those probes *and* clears every side they
+supplied, putting the notice back to naming only what it named itself so the rest is
+re-earned rather than keeping an answer whose evidence is gone. `backfill --only CODES`
+bounds a repair to the companies it concerns.
 
 | Column | Meaning |
 | --- | --- |
