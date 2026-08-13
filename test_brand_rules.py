@@ -13,11 +13,18 @@ from announcement_history import (
     _find_brands,
     classify_headline,
     resolve_registrars,
+    strip_watermark,
 )
 
 
 def brands(text: str) -> list[str]:
     return list(dict.fromkeys(name for _, name in _find_brands(text)))
+
+
+# How pdfminer reads the ASX's rotated "For personal use only" stamp back: one
+# character per line, and in an order that is neither the phrase nor a clean
+# reversal of it. Verbatim from Champion Iron's 12 Jan 2024 notice.
+STAMP = "l\n\ny\nn\no\ne\ns\nu\n\nl\n\na\nn\no\ns\nr\ne\np\nr\no\nF"
 
 
 class Headlines(unittest.TestCase):
@@ -163,6 +170,42 @@ class DefinedTerms(unittest.TestCase):
         self.assertEqual(_defined_terms(text), {})
         res = resolve_registrars(text)
         self.assertEqual((res.old, res.new), ("Computershare", "Automic"))
+
+
+class Watermark(unittest.TestCase):
+    """The stamp the ASX adds, which is not part of the lodged document."""
+
+    def test_a_scan_carrying_only_the_stamp_has_no_text_left(self):
+        # Champion Iron, 12 Jan 2024. The page is an image; the stamp is the
+        # only text on it. Left in, the scan looks like a letter that was read
+        # and named no registrar, and `ok = 1` stops meaning anything.
+        self.assertEqual(strip_watermark(STAMP + "\n\n \n \n\x0c").strip(), "")
+
+    def test_bullets_are_not_text_either(self):
+        # NWL, 14 Apr 2025: two stamps and the bullet glyphs of a scanned list.
+        left = strip_watermark(f"{STAMP}\n\n• • • • • •\n\n{STAMP}")
+        self.assertFalse(any(c.isalpha() for c in left))
+
+    def test_stamp_does_not_push_a_registrar_out_of_its_context(self):
+        # The stamp lands wherever the page's text order puts it, routinely
+        # mid-sentence, and it is 35 characters of a 120-character window. Here
+        # it is the only thing between "share register" and the registrar that
+        # word is there to vouch for, and Boardroom stops counting as one.
+        lead = (
+            "Our share register is currently maintained by the provider named "
+            "below, whose contact details for all holder enquiries are "
+        )
+        tail = "Boardroom Pty Limited, Level 12, 225 George Street, Sydney."
+        squash = lambda t: " ".join(t.split())
+        self.assertEqual(brands(squash(lead + tail)), ["Boardroom"])
+        self.assertEqual(brands(squash(f"{lead}\n\n{STAMP}\n\n{tail}")), [])
+        self.assertEqual(
+            brands(squash(strip_watermark(f"{lead}\n\n{STAMP}\n\n{tail}"))), ["Boardroom"]
+        )
+
+    def test_running_text_is_left_alone(self):
+        for text in ("a b c d e", "Level 2, 100 Railway Road", ""):
+            self.assertEqual(strip_watermark(text), text)
 
 
 class Resolution(unittest.TestCase):

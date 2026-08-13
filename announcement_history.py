@@ -24,11 +24,12 @@ Share Registry Address" is a registrar moving office - the provider is unchanged
 and those outnumber real provider switches roughly three to one. Only the PDF body
 names the outgoing and incoming registrar, so `resolve` fetches it and extracts them.
 
-Plenty of notices name only the registrar the company is moving to. That leaves a
-change with one end, which is no change at all as far as `changes` is concerned,
-so `backfill` goes looking for the other end in the company's other filings - a
-proxy form or annual report lodged either side of the notice prints whoever held
-the register at the time.
+Plenty of notices name only the registrar the company is moving to, and some are
+image-only scans that name neither. Either way the change has an end missing,
+which is no change at all as far as `changes` is concerned, so `backfill` goes
+looking for the missing ends in the company's other filings - a proxy form or
+annual report lodged either side of the notice prints whoever held the register
+at the time.
 
 Usage:
     python announcement_history.py scan --codes ECS,BHP   # index announcements
@@ -705,6 +706,72 @@ class AsxArchiveClient:
         return url, extract_pdf_text(r.content)
 
 
+# The ASX stamps "For personal use only" down the side of the announcements it
+# serves. It is a rotated text layer the exchange adds, not part of the lodged
+# document, and pdfminer reads it out one character per line - in whatever order
+# the layout walk happens to reach the glyphs, which is neither the phrase nor a
+# clean reversal of it:
+#
+#     l\n\ny\nn\no\ne\ns\nu\n\nl\n\na\nn\no\ns\nr\ne\np\nr\no\nF
+#
+# It has to come out before anything reads the text, for two separate reasons:
+#
+#   * On an image-only scan it is the *only* text on the page. The scan then
+#     looks exactly like a document that was read and found to name no
+#     registrar, and gets stored `ok = 1` with no brands. Champion Iron's
+#     12 Jan 2024 change of registrar is one of those. This is also why `ok = 0`
+#     stopped happening after 2007 - not because the ASX stopped serving scans,
+#     but because it started watermarking them.
+#   * On a readable one it is dropped wherever it falls in the page's text
+#     order, routinely mid-sentence, where it counts against the 120-character
+#     windows the from/to, cease and registry-context rules search in.
+#
+# Matched on the letters rather than on their order, since the order is a
+# rendering artefact: a run of isolated single characters holding exactly the
+# letters of the phrase is the watermark whichever way the stamp was rotated,
+# and is not something running text produces.
+_WATERMARK_LETTERS = sorted("forpersonaluseonly")
+_LONE_LETTER = re.compile(r"(?:(?<=\s)|\A)[^\W\d_](?=\s|\Z)")
+
+
+def strip_watermark(text: str) -> str:
+    """`text` with any "For personal use only" stamp removed."""
+    width = len(_WATERMARK_LETTERS)
+    cuts: list[tuple[int, int]] = []
+
+    def take(run: list[re.Match]) -> None:
+        i = 0
+        while i + width <= len(run):
+            window = run[i : i + width]
+            if sorted(m.group(0).lower() for m in window) == _WATERMARK_LETTERS:
+                cuts.append((window[0].start(), window[-1].end()))
+                i += width  # a page break can leave two stamps back to back
+            else:
+                i += 1
+
+    run: list[re.Match] = []
+    for m in _LONE_LETTER.finditer(text):
+        # Only whitespace may separate one character of the stamp from the next;
+        # anything else ends the run and starts a new one.
+        if run and text[run[-1].end() : m.start()].strip():
+            take(run)
+            run = []
+        run.append(m)
+    take(run)
+
+    if not cuts:
+        return text
+    out = []
+    at = 0
+    for start, end in cuts:
+        out.append(text[at:start])
+        at = end
+    out.append(text[at:])
+    # A space, not nothing: the stamp lands between sentences as often as around
+    # them, and joining the two halves would invent a word.
+    return " ".join(out)
+
+
 def extract_pdf_text(blob: bytes) -> str | None:
     try:
         from pdfminer.high_level import extract_text
@@ -716,11 +783,14 @@ def extract_pdf_text(blob: bytes) -> str | None:
     # at this volume the warnings drown out the progress output.
     logging.getLogger("pdfminer").setLevel(logging.ERROR)
     try:
-        text = extract_text(io.BytesIO(blob))
-        # An image-only scan still yields a page-separator form feed, which is
-        # truthy but carries no text. Treat that as "not extractable" so the
-        # `ok` column distinguishes a scan from a document we actually read.
-        return text if text and text.strip() else None
+        text = strip_watermark(extract_text(io.BytesIO(blob)))
+        # An image-only scan still yields a page-separator form feed, and since
+        # the watermark it yields that too - both truthy, neither text. What is
+        # left once the stamp is out has to contain a letter to count as a
+        # document we read, so the `ok` column really does distinguish a scan
+        # from a letter that named no registrar. Bullet glyphs are the other
+        # thing a scan leaves behind, and they do not pass this either.
+        return text if any(c.isalpha() for c in text) else None
     except Exception as exc:  # a scanned or malformed PDF should not kill a run
         log.debug("pdf extract failed: %s", exc)
         return None
@@ -765,8 +835,9 @@ CREATE TABLE IF NOT EXISTS resolution (
     brands        TEXT,
     resolved_at   TEXT NOT NULL,
     ok            INTEGER NOT NULL,
-    -- ids_id of the unrelated announcement the missing side was read out of,
-    -- when `backfill` supplied it. NULL means both sides came from the notice.
+    -- ids_id of the unrelated announcement a missing side was read out of, when
+    -- `backfill` supplied it - one per side, comma separated, so a notice that
+    -- named neither registrar carries two. NULL means the notice named both.
     backfilled_from TEXT
 );
 
@@ -1030,17 +1101,35 @@ def cmd_resolve(args: argparse.Namespace) -> int:
     return cmd_changes(args)
 
 
-# A notice that named only one registrar. `method` is not tested: what makes a
-# row half-resolved is that one column is filled and the other is not, however
-# the resolver got there.
-_ONE_SIDED_SQL = """
+# A notice with a side still unnamed. `method` is not tested: what makes a row
+# incomplete is an empty column, however the resolver got there.
+#
+# `ok` is not tested either, and that is the interesting half. A notice that
+# named one registrar and a scan that named none differ only in how many sides
+# have to be found elsewhere - the evidence is the same evidence, read out of
+# the same filings. Champion Iron's 12 Jan 2024 notice is an image-only scan
+# with nothing readable in it at all; its register was Automic's in the annual
+# report before and Computershare's in the one after, which is the change.
+# Requiring the notice to have named at least one end wrote off every scan in
+# the archive as unrecoverable without OCR, when a good part of them is not.
+#
+# A notice that named neither registrar is only opened when the headline is a
+# `provider_change` one, though. With one end stated the notice anchors the
+# probe - the other end has to differ from a registrar this document actually
+# named. With neither, the only thing asserting that a change happened at all is
+# the headline, and `registry_other` headlines ("Share register update") do not
+# assert it. Two probes either side of one of those would date whatever the
+# company's next real switch was to the wrong announcement.
+_MISSING_SIDE_SQL = """
 SELECT a.code, a.query_code, a.date, a.headline, a.classification,
        r.ids_id, r.old_registry, r.new_registry, r.method
 FROM announcement a
 JOIN resolution r ON r.ids_id = a.ids_id
-WHERE r.ok = 1 AND r.backfilled_from IS NULL
-  AND (r.old_registry IS NULL) <> (r.new_registry IS NULL)
+WHERE r.backfilled_from IS NULL
   AND a.classification IN ({placeholders})
+  AND ((r.old_registry IS NULL) <> (r.new_registry IS NULL)
+       OR (r.old_registry IS NULL AND r.new_registry IS NULL
+           AND a.classification = '{provider}'))
 ORDER BY a.date DESC
 """
 
@@ -1071,9 +1160,19 @@ def _probe_pdf(
 
 
 def _candidate_documents(
-    client: AsxArchiveClient, code: str, ids_id: str, on_date: str, before: bool
-) -> list[Announcement]:
-    """Corroborating announcements on one side of `on_date`, nearest to it first.
+    client: AsxArchiveClient,
+    code: str,
+    ids_id: str,
+    on_date: str,
+    sides: tuple[bool, ...],
+) -> dict[bool, list[Announcement]]:
+    """Corroborating announcements either side of `on_date`, nearest to it first.
+
+    `sides` is which of the two ends still needs naming, in the same `before`
+    sense the rest of `backfill` uses: True is the outgoing registrar, read from
+    a document lodged before the notice, False the incoming one, read from a
+    document lodged after it. Both are answered from one set of index pages, so
+    a notice that named neither registrar costs three years indexed, not four.
 
     `code` must be the code the company trades under *now*, not the one the
     notice was released under. ASX tickers get recycled, and the archive
@@ -1095,37 +1194,39 @@ def _candidate_documents(
     on the notice's own year page, nothing else on that page is this company's
     either, and returning no candidates is the only safe answer.
 
-    Only the announcement's own year and the neighbouring one on that side are
-    indexed. A company lodges an annual report and a notice of meeting every
-    year, so two years is already generous, and each extra year is a request
-    spent on a company that is unlikely to have a proxy form hiding in it.
+    Only the announcement's own year and the neighbouring one on each requested
+    side are indexed. A company lodges an annual report and a notice of meeting
+    every year, so two years is already generous, and each extra year is a
+    request spent on a company that is unlikely to have a proxy form hiding in
+    it.
     """
     year = int(on_date[:4])
-    years = (year - 1, year) if before else (year, year + 1)
-    cutoff = on_date
-    if not before:
-        cutoff = (
-            date.fromisoformat(on_date) + timedelta(days=_EFFECTIVE_LAG_DAYS)
-        ).isoformat()
-
     own_year = client.index(code, year)
     if own_year is None or not any(a.ids_id == ids_id for a in own_year):
         log.debug("%s no longer resolves to the entity that lodged %s", code, ids_id)
-        return []
+        return {before: [] for before in sides}
     indexed = {year: own_year}
 
-    out: list[Announcement] = []
-    for y in years:
-        if y > date.today().year:
-            continue
-        if y not in indexed:
-            indexed[y] = client.index(code, y) or []
-        for a in indexed[y]:
-            if (a.date < cutoff) != before:
+    out: dict[bool, list[Announcement]] = {}
+    for before in sides:
+        cutoff = on_date
+        if not before:
+            cutoff = (
+                date.fromisoformat(on_date) + timedelta(days=_EFFECTIVE_LAG_DAYS)
+            ).isoformat()
+        found: list[Announcement] = []
+        for y in (year - 1, year) if before else (year, year + 1):
+            if y > date.today().year:
                 continue
-            if corroborating(a.headline):
-                out.append(a)
-    out.sort(key=lambda a: a.date, reverse=before)
+            if y not in indexed:
+                indexed[y] = client.index(code, y) or []
+            for a in indexed[y]:
+                if (a.date < cutoff) != before:
+                    continue
+                if corroborating(a.headline):
+                    found.append(a)
+        found.sort(key=lambda a: a.date, reverse=before)
+        out[before] = found
     return out
 
 
@@ -1136,17 +1237,25 @@ def _drop_stale_probes(conn: sqlite3.Connection, brand: str) -> tuple[int, int]:
     rule makes every probe that fired on it stale. Dropping the probe is not
     enough on its own: a resolution it filled in keeps the answer long after the
     evidence is gone, and `backfill` skips rows that already have both sides. So
-    the filled side is cleared too and the notice goes back to being one-sided,
-    which is what it always was on the evidence.
+    every side a probe supplied is cleared too and the notice goes back to
+    naming only what it named itself, which is what it always did on the
+    evidence. A notice that named neither registrar goes back to naming neither.
+
+    `backfilled_from` holds one id per side supplied, comma separated, so
+    membership is tested rather than equality.
     """
     like = f"%{brand}%"
     reset = conn.execute(
         """UPDATE resolution SET
-             old_registry = CASE WHEN method LIKE '%+prior_doc' THEN NULL ELSE old_registry END,
-             new_registry = CASE WHEN method LIKE '%+next_doc' THEN NULL ELSE new_registry END,
-             method = REPLACE(REPLACE(method, '+prior_doc', ''), '+next_doc', ''),
+             old_registry = CASE WHEN method LIKE '%prior_doc%' THEN NULL ELSE old_registry END,
+             new_registry = CASE WHEN method LIKE '%next_doc%' THEN NULL ELSE new_registry END,
+             method = RTRIM(REPLACE(REPLACE(REPLACE(
+                 method, 'prior_doc', ''), 'next_doc', ''), '++', '+'), '+'),
              backfilled_from = NULL
-           WHERE backfilled_from IN (SELECT ids_id FROM probe WHERE brands LIKE ?)""",
+           WHERE EXISTS (
+             SELECT 1 FROM probe p WHERE p.brands LIKE ?
+               AND ',' || resolution.backfilled_from || ',' LIKE '%,' || p.ids_id || ',%'
+           )""",
         (like,),
     ).rowcount
     dropped = conn.execute("DELETE FROM probe WHERE brands LIKE ?", (like,)).rowcount
@@ -1160,7 +1269,7 @@ def cmd_backfill(args: argparse.Namespace) -> int:
         dropped, reset = _drop_stale_probes(conn, args.reprobe_brand)
         print(
             f"dropped {dropped} cached probes naming {args.reprobe_brand}; "
-            f"{reset} notices went back to one-sided",
+            f"{reset} notices went back to what they named themselves",
             file=sys.stderr,
         )
     # Address notices are excluded by default. They are one-sided for the honest
@@ -1171,7 +1280,12 @@ def cmd_backfill(args: argparse.Namespace) -> int:
     if args.include_other:
         wanted.append(CLASS_OTHER)
     placeholders = ",".join("?" * len(wanted))
-    rows = list(conn.execute(_ONE_SIDED_SQL.format(placeholders=placeholders), wanted))
+    rows = list(
+        conn.execute(
+            _MISSING_SIDE_SQL.format(placeholders=placeholders, provider=CLASS_PROVIDER),
+            wanted,
+        )
+    )
     if args.only:
         only = {c.strip().upper() for c in args.only.split(",") if c.strip()}
         rows = [r for r in rows if only & {r["code"], r["query_code"]}]
@@ -1182,8 +1296,8 @@ def cmd_backfill(args: argparse.Namespace) -> int:
         return 0
 
     print(
-        f"backfilling {len(rows)} one-sided notices "
-        f"(up to {args.probes} documents each)",
+        f"backfilling {len(rows)} notices with a side unnamed "
+        f"(up to {args.probes} documents per side)",
         file=sys.stderr,
     )
     client = AsxArchiveClient(workers=args.workers, delay=args.delay)
@@ -1191,57 +1305,76 @@ def cmd_backfill(args: argparse.Namespace) -> int:
     filled = unchanged = exhausted = 0
 
     def work(row: sqlite3.Row):
-        before = row["old_registry"] is None
-        known = row["new_registry"] if before else row["old_registry"]
+        sides = tuple(
+            before
+            for before in (True, False)
+            if (row["old_registry"] if before else row["new_registry"]) is None
+        )
         # query_code is the code the scan asked about, i.e. the one the company
         # trades under today - the only code the archive still serves this
         # company's history under. Rows written before that column existed fall
         # back to the released-under code.
         live = row["query_code"] or row["code"]
-        cands = _candidate_documents(client, live, row["ids_id"], row["date"], before)
-        return row, before, known, cands[: args.probes]
+        cands = _candidate_documents(client, live, row["ids_id"], row["date"], sides)
+        return row, {b: c[: args.probes] for b, c in cands.items()}
 
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        for i, (row, before, known, cands) in enumerate(pool.map(work, rows), 1):
-            found = None
-            source = None
-            same = False
-            for ann in cands:
-                brands = _probe_pdf(client, conn, ann, now)
-                if len(brands) != 1:
-                    # Nothing, or a document that names two registrars and so
-                    # cannot say which one held the register.
-                    continue
-                if brands[0] == known:
-                    # The register did not move: this was not a switch.
-                    same = True
+        for i, (row, cands) in enumerate(pool.map(work, rows), 1):
+            # Whichever end the notice named itself stands; the rest is read out
+            # of the company's other filings.
+            ends = {True: row["old_registry"], False: row["new_registry"]}
+            source: dict[bool, str] = {}
+            for before, anns in cands.items():
+                for ann in anns:
+                    brands = _probe_pdf(client, conn, ann, now)
+                    if len(brands) != 1:
+                        # Nothing, or a document that names two registrars and
+                        # so cannot say which one held the register.
+                        continue
+                    ends[before], source[before] = brands[0], ann.ids_id
                     break
-                found, source = brands[0], ann.ids_id
-                break
 
-            if found:
-                column = "old_registry" if before else "new_registry"
+            if ends[True] is None or ends[False] is None:
+                # An end still unnamed. Nothing is written even if the other end
+                # was found, so a later run with more probes finishes the job
+                # rather than inheriting half of it - and `backfilled_from`
+                # keeps meaning "this row is complete, stop probing it".
+                exhausted += 1
+            elif ends[True] == ends[False]:
+                # The same registrar either side: the register did not move, so
+                # this was not a switch.
+                unchanged += 1
+            else:
+                method = "+".join(
+                    part
+                    for part in (
+                        row["method"],
+                        "prior_doc" if True in source else "",
+                        "next_doc" if False in source else "",
+                    )
+                    if part
+                )
                 conn.execute(
-                    f"UPDATE resolution SET {column} = ?, method = ?, "
-                    f"backfilled_from = ? WHERE ids_id = ?",
-                    (found, f"{row['method']}+{'prior' if before else 'next'}_doc",
-                     source, row["ids_id"]),
+                    "UPDATE resolution SET old_registry = ?, new_registry = ?, "
+                    "method = ?, backfilled_from = ? WHERE ids_id = ?",
+                    (ends[True], ends[False], method,
+                     ",".join(source[b] for b in (True, False) if b in source),
+                     row["ids_id"]),
                 )
                 filled += 1
                 if args.verbose:
-                    a, b = (found, known) if before else (known, found)
-                    print(f"  {row['code']} {row['date']}: {a} => {b}", file=sys.stderr)
-            elif same:
-                unchanged += 1
-            else:
-                exhausted += 1
+                    print(
+                        f"  {row['code']} {row['date']}: "
+                        f"{ends[True]} => {ends[False]}  {method}",
+                        file=sys.stderr,
+                    )
             if i % 25 == 0:
                 conn.commit()
                 print(f"  {i}/{len(rows)}", file=sys.stderr)
     conn.commit()
     print(
         f"backfilled {filled} of {len(rows)}; {unchanged} showed the same "
-        f"registrar either side (no change); {exhausted} found no evidence",
+        f"registrar either side (no change); {exhausted} left a side unnamed",
         file=sys.stderr,
     )
     for what, err in client.errors[:10]:
@@ -1339,13 +1472,15 @@ def cmd_status(args: argparse.Namespace) -> int:
     )
     bf = conn.execute(
         "SELECT COUNT(*) n, SUM(backfilled_from IS NOT NULL) done, "
-        "SUM(ok = 1 AND (old_registry IS NULL) <> (new_registry IS NULL)) half "
+        "SUM((old_registry IS NULL) <> (new_registry IS NULL)) half, "
+        "SUM(old_registry IS NULL AND new_registry IS NULL) neither "
         "FROM resolution"
     ).fetchone()
     probes = conn.execute("SELECT COUNT(*) n FROM probe").fetchone()
     print(
-        f"one-sided notices still missing a side: {bf['half'] or 0}; "
-        f"{bf['done'] or 0} completed by backfill from {probes['n'] or 0} probed documents"
+        f"notices still missing a side: {bf['half'] or 0} named one registrar, "
+        f"{bf['neither'] or 0} named none; {bf['done'] or 0} completed by "
+        f"backfill from {probes['n'] or 0} probed documents"
     )
     return 0
 
@@ -1390,7 +1525,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     s.add_argument("--limit", type=int)
     s.add_argument("--probes", type=int, default=3,
-                   help="documents to open per notice before giving up (default 3)")
+                   help="documents to open per unnamed side before giving up (default 3)")
     s.add_argument("--include-other", action="store_true",
                    help=f"also backfill {CLASS_OTHER} notices, not just {CLASS_PROVIDER}")
     s.add_argument("--only", metavar="CODES",
