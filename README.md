@@ -370,7 +370,7 @@ Three separate limits, worth keeping apart because they have different fixes:
    appointed X" without naming who they left, and plenty of others describe the change
    without naming either end. That, not scanning, is what caps the 2010s.
 
-Measured over the full market (1,840 codes, 29,921 company-years), across the 942
+Measured over the full market (1,840 codes, 29,921 company-years), across the 1,036
 `provider_change` notices:
 
 | Era | PDFs readable | Pair from the notice alone | Pair after `backfill` |
@@ -379,14 +379,14 @@ Measured over the full market (1,840 codes, 29,921 company-years), across the 94
 | 2005–2009 | 44 / 74 | 21 / 74 (28%) | 30 / 74 (**40%**) |
 | 2010–2014 | 169 / 169 | 62 / 169 (36%) | 138 / 169 (**81%**) |
 | 2015–2019 | 228 / 228 | 124 / 228 (54%) | 215 / 228 (**94%**) |
-| 2020+ | 442 / 445 | 404 / 445 (90%) | 431 / 445 (**96%**) |
+| 2020+ | 536 / 539 | 498 / 539 (92%) | 525 / 539 (**97%**) |
 
 OCR would now only buy back the pre-2005 rows, where the surrounding filings are scans too
 and there is nothing to probe. Everywhere else the cap is limit 3, which is what `backfill`
 is for: it lifts 2010–2014 from 36% to 81% and 2015–2019 from 54% to 94%.
 
-Of the 905 pairs that resolve, 534 (59%) come from an explicit "from X to Y" in the text
-and 203 (22%) needed `backfill` for one of their two ends or both. 44 rest on the weakest
+Of the 999 pairs that resolve, 628 (63%) come from an explicit "from X to Y" in the text
+and 203 (20%) needed `backfill` for one of their two ends or both. 44 rest on the weakest
 `two_brands` fallback — two registrar names in one document, taken in order of appearance.
 The `method` column keeps all of these apart; do not treat a `two_brands` row as equal
 evidence to a `from_to` one.
@@ -500,23 +500,22 @@ than two registrars, completing 203 of them.
 rule learned "share register" alongside "share registry". They were never indexed before,
 so no amount of re-resolving would have found them; the market had to be re-scanned.
 
-**905 registrar switches across 741 of the 1,840 companies** — so roughly two companies in
-five have changed registry at least once in a window the daily tracker could never have
-seen. 814 came from `provider_change` headlines, 47 from `address_only` and 44 from
-`registry_other`: the 91 from non-obvious headlines are what the headline-only approach
-would have missed.
+**999 registrar switches across 809 of the 1,840 companies** — so roughly 44% of the market
+has changed registry at least once in a window the daily tracker could never have seen. 908
+came from `provider_change` headlines, 47 from `address_only` and 44 from `registry_other`:
+the 91 from non-obvious headlines are what the headline-only approach would have missed.
 
 Net movement over the resolved history:
 
 | Registrar | Gained | Lost | Net |
 | --- | ---: | ---: | ---: |
-| Automic | 422 | 92 | **+330** |
+| Automic | 516 | 92 | **+424** |
 | Xcend | 45 | 0 | +45 |
 | Registries Limited | 14 | 10 | +4 |
 | Boardroom | 84 | 83 | +1 |
 | Registry Direct | 11 | 11 | 0 |
 | MUFG Corporate Markets | 116 | 154 | **−38** |
-| Security Transfer Australia | 37 | 100 | **−63** |
+| Security Transfer Australia | 37 | 194 | **−157** |
 | Advanced Share Registry | 68 | 180 | **−112** |
 | Computershare | 106 | 272 | **−166** |
 
@@ -530,20 +529,55 @@ Automic (62). MUFG is where they change the picture most: without them its `Gain
 collapses to 33, so the pre-Automic decade of consolidation into what was then Link Market
 Services is largely invisible.
 
-Switches are heavily concentrated in time: **180 in 2024** against 42-67 in surrounding
-years. That spike is not 180 independent decisions — it is dominated by Automic absorbing
-Advanced Share Registry's book over a few days in early March 2024. Bulk transfers of a
-registrar's client list look identical to individual switches in this data, so treat
-same-week clusters as one event.
+Switches are heavily concentrated in time: **180 in 2024** and **127 in 2020**, against
+16-70 in every other year the archive covers cleanly (2008 on). Both are the same shape:
+a registrar absorbing a rival's whole client list in one lodgement window rather than 180
+or 127 independent decisions. 2024's is Automic absorbing Advanced Share Registry's book
+over a few days in early March. 2020's is Automic absorbing Security Transfer Australia's
+book in a single lodgement on 20 January — see below, since that one day is also why this
+reconstruction used to undercount by 94 rows. Bulk transfers of a registrar's client list
+look identical to individual switches in this data, so treat same-day and same-week
+clusters as one event.
 
-`data/registry_changes_history.csv` is the flat export of all 905, with the `method` column
+`data/registry_changes_history.csv` is the flat export of all 999, with the `method` column
 so weaker inferences stay visible.
+
+### One document id, ninety-five companies
+
+`ids_id` looks like a natural primary key for `announcement` — one row per ASX document —
+and almost always is. It was not on 20 January 2020: Automic's mass pickup of Security
+Transfer Australia's book put the identical generic letter, naming neither company, under
+idsId `02193920` for 95 different companies at once. With `ids_id` alone as the primary key
+and `INSERT OR REPLACE` firing on every scan, whichever code the crawl happened to reach
+last for that id kept the row, and every other company sharing it had its own copy of the
+same switch silently overwritten. Only ZNC's survived the original full-market crawl, and
+which of the 95 that turned out to be was arbitrary — a user report that LCY's registrar
+switch that day was missing traced back to exactly this.
+
+The fix is a composite primary key, `(ids_id, code)`, so a shared document keeps one row per
+company instead of collapsing to one. `resolution` stays keyed on `ids_id` alone — it is one
+PDF, read once, and every announcement row naming that id joins to the same resolution — so
+recovering the dropped rows needed no new PDF fetches, only a rescan of the announcement
+index itself. A full-market rescan would be the only way to be certain no other instance of
+this collision is sitting unnoticed somewhere else in the archive, but the only confirmed
+occurrence is this one event, so the recovery scoped to a rescan of 2020 alone (all 1,840
+codes, one year each, under three minutes): 94 companies came back, every one of them dated
+20 January 2020, `Security Transfer Australia → Automic`, `from_to`. Other years were not
+rescanned — if this pattern recurs elsewhere in the archive it has not yet been found, only
+guaranteed not to happen again from here. `data/announcements.sqlite`'s schema was migrated
+in place first; that step alone cannot resurrect a row an old scan had already overwritten,
+only the rescan does that.
+
+Because a resolved document can now back more than one announcement row, the "2,119" and
+"1,968 / 151" figures above count distinct PDFs, not registrar-switch rows — `announcement`
+holds 2,213 rows over those same 2,119 documents. Every other number in this section already
+includes the recovery.
 
 ### Ticker changes
 
 A registrar switch is filed under whatever code the company traded as **that day**, which
-is not necessarily the code it trades as now. 271 of the 905 rows above are in that
-position, and 249 of them name a code that is not in `data/asx_registries.csv` at all — so
+is not necessarily the code it trades as now. 293 of the 999 rows above are in that
+position, and 269 of them name a code that is not in `data/asx_registries.csv` at all — so
 before this existed, joining the two files on `code` silently dropped a quarter of the
 history.
 
@@ -552,7 +586,7 @@ halves. The archive resolves any code to one entity and then serves that entity'
 history under every code it has used, so an announcement whose released-under `code` differs
 from the `query_code` we asked about *is* a rename, stated by the ASX rather than inferred.
 `tickers` groups those pairs into the `ticker_change` table and
-`data/ticker_changes.csv`: **436 renames across 362 companies**, from 2003 to 2025, 69 of
+`data/ticker_changes.csv`: **448 renames across 372 companies**, from 2003 to 2025, 70 of
 those companies having changed code more than once.
 
 Three things it does not claim:
@@ -560,14 +594,14 @@ Three things it does not claim:
 - **It is not a date, it is a bracket.** The rename happened somewhere between the last
   announcement lodged under the old code and the first under the new one, and this database
   holds only *registry-related* announcements — a sparse sample of a company's filings. So
-  the bracket is wide, and 241 of the 436 have no upper end at all, the company not having
+  the bracket is wide, and 251 of the 448 have no upper end at all, the company not having
   lodged a registry notice under its new code yet.
 - **It is not the full list of ASX renames.** A company reaches this table only by having
   filed something about its share registry, under a code it has since given up.
-- **The old code is not a key.** ASX recycles codes: 41 of these old codes belong to a
+- **The old code is not a key.** ASX recycles codes: 42 of these old codes belong to a
   different company today, and `AUK` and `EMS` each appear twice because two entities used
   the code in turn and both later renamed. The primary key is the pair, and
-  `old_code_relisted` flags the 41 so a join does not quietly land on a stranger — the same
+  `old_code_relisted` flags the 42 so a join does not quietly land on a stranger — the same
   hazard `backfill` guards against by looking candidates up under `query_code`.
 
 The safe direction is current → old: `current_code` is unambiguous, which is why `export`
@@ -593,12 +627,13 @@ Because it is a binary blob, git cannot diff it meaningfully — every scan rewr
 file. If it starts churning the history, `export` it to CSV and track that instead, which is
 the pattern `data/asx_registries.csv` already follows.
 
-`announcement` — one row per registry-related announcement found. Headlines that are not
-about a share registry are discarded at parse time and never stored.
+`announcement` — one row per registry-related announcement found, per company it was
+released under. Headlines that are not about a share registry are discarded at parse time
+and never stored.
 
 | Column | Meaning |
 | --- | --- |
-| `ids_id` | ASX announcement id (PK); also the key for the PDF URL |
+| `ids_id` | ASX announcement id; also the key for the PDF URL. Not unique alone — a bulk registrar migration can lodge the identical document under several companies at once (see "One document id, ninety-five companies" above), so the primary key is `(ids_id, code)` |
 | `code` | code the announcement was **released under** |
 | `query_code` | code we searched for — differs from `code` after a ticker change |
 | `date` | release date, ISO |
@@ -609,12 +644,15 @@ about a share registry are discarded at parse time and never stored.
 | `pages` | page count |
 | `year` | the archive year slice it came from |
 
-`resolution` — one row per PDF opened. Separate from `announcement` so re-running `resolve`
-does not re-fetch, and so a failed extraction is recorded rather than retried forever.
+`resolution` — one row per PDF opened, keyed on `ids_id` alone even when several
+`announcement` rows share it (same document, several companies): the PDF is read once and
+every one of those rows joins to the same resolution. Separate from `announcement` so
+re-running `resolve` does not re-fetch, and so a failed extraction is recorded rather than
+retried forever.
 
 | Column | Meaning |
 | --- | --- |
-| `ids_id` | FK to `announcement` (PK) |
+| `ids_id` | ASX announcement id (PK) — logically FKs to `announcement.ids_id`, which is no longer itself unique |
 | `pdf_url` | resolved `announcements.asx.com.au` link |
 | `old_registry` | outgoing registrar, canonical, NULL if not determined |
 | `new_registry` | incoming registrar, canonical, NULL if not determined |
@@ -660,7 +698,7 @@ would leave the old pair behind as a fact nothing supports any more.
 | --- | --- |
 | `old_code`, `current_code` | composite PK — the old code alone is not unique |
 | `old_last_seen` | last announcement lodged under the old code |
-| `current_first_seen` | first lodged under the new one; NULL for 241 of 436 — the rename is bracketed on one side only |
+| `current_first_seen` | first lodged under the new one; NULL for 251 of 448 — the rename is bracketed on one side only |
 | `announcements` | how many announcements carry the old code — 1 is a single sighting, not a weaker claim |
 | `old_code_relisted` | 1 if another company trades under the old code today |
 | `derived_at` | when the table was last rebuilt |

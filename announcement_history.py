@@ -801,9 +801,18 @@ def extract_pdf_text(blob: bytes) -> str | None:
 # Storage
 # --------------------------------------------------------------------------
 
+# `ids_id` looks like it ought to be a natural PK - one row per ASX document -
+# but it is not: a bulk registrar migration can lodge the *same* document id
+# under several companies at once. Automic's 20 January 2020 mass pickup of
+# Security Transfer Australia's book is one - idsId 02193920 is "released as"
+# both LCY and ZNC, an identical generic letter naming neither company. With
+# `ids_id` alone as PK, INSERT OR REPLACE let whichever code was scanned last
+# overwrite the other, silently dropping that company's registry change. The
+# PK is (ids_id, code) so both survive; `resolution` stays keyed on `ids_id`
+# alone since it is one PDF read once, and both announcement rows join to it.
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS announcement (
-    ids_id          TEXT PRIMARY KEY,
+    ids_id          TEXT NOT NULL,
     code            TEXT NOT NULL,
     query_code      TEXT NOT NULL,
     date            TEXT NOT NULL,
@@ -812,7 +821,8 @@ CREATE TABLE IF NOT EXISTS announcement (
     classification  TEXT NOT NULL,
     price_sensitive INTEGER,
     pages           INTEGER,
-    year            INTEGER NOT NULL
+    year            INTEGER NOT NULL,
+    PRIMARY KEY (ids_id, code)
 );
 CREATE INDEX IF NOT EXISTS idx_ann_code ON announcement(code, date);
 CREATE INDEX IF NOT EXISTS idx_ann_class ON announcement(classification);
@@ -827,8 +837,11 @@ CREATE TABLE IF NOT EXISTS scanned (
     PRIMARY KEY (code, year)
 );
 
+-- One row per PDF, not per announcement: a document shared across companies
+-- (see the note above `announcement`) is fetched once and every announcement
+-- row that names its ids_id joins to the same resolution.
 CREATE TABLE IF NOT EXISTS resolution (
-    ids_id        TEXT PRIMARY KEY REFERENCES announcement(ids_id),
+    ids_id        TEXT PRIMARY KEY,
     pdf_url       TEXT,
     old_registry  TEXT,
     new_registry  TEXT,
@@ -897,6 +910,43 @@ def _migrate(conn: sqlite3.Connection) -> None:
     have = {row["name"] for row in conn.execute("PRAGMA table_info(resolution)")}
     if "backfilled_from" not in have:
         conn.execute("ALTER TABLE resolution ADD COLUMN backfilled_from TEXT")
+        conn.commit()
+    # A database created before the (ids_id, code) fix has `ids_id` alone as
+    # PK. SQLite cannot ALTER a primary key, so rebuild the table - every row
+    # it already holds is one whichever code was scanned last left behind, so
+    # copying them across loses nothing further; only a rescan recovers what
+    # the old PK already dropped.
+    pk_cols = [
+        row["name"] for row in conn.execute("PRAGMA table_info(announcement)") if row["pk"]
+    ]
+    if pk_cols == ["ids_id"]:
+        conn.executescript(
+            """
+            ALTER TABLE announcement RENAME TO announcement_old_pk;
+            CREATE TABLE announcement (
+                ids_id          TEXT NOT NULL,
+                code            TEXT NOT NULL,
+                query_code      TEXT NOT NULL,
+                date            TEXT NOT NULL,
+                time            TEXT,
+                headline        TEXT NOT NULL,
+                classification  TEXT NOT NULL,
+                price_sensitive INTEGER,
+                pages           INTEGER,
+                year            INTEGER NOT NULL,
+                PRIMARY KEY (ids_id, code)
+            );
+            INSERT INTO announcement
+                (ids_id, code, query_code, date, time, headline, classification,
+                 price_sensitive, pages, year)
+            SELECT ids_id, code, query_code, date, time, headline, classification,
+                   price_sensitive, pages, year
+            FROM announcement_old_pk;
+            DROP TABLE announcement_old_pk;
+            CREATE INDEX IF NOT EXISTS idx_ann_code ON announcement(code, date);
+            CREATE INDEX IF NOT EXISTS idx_ann_class ON announcement(classification);
+            """
+        )
         conn.commit()
 
 
@@ -1146,11 +1196,17 @@ def cmd_resolve(args: argparse.Namespace) -> int:
     if args.reresolve_brand:
         redo += " OR r.brands LIKE ?"
         params.append(f"%{args.reresolve_brand}%")
+    # GROUP BY a.ids_id: a document shared across companies (see the schema
+    # note above `announcement`) would otherwise show up once per code and
+    # get its PDF fetched again for each - wasted requests for a resolution
+    # row that is the same either way, since only `row["ids_id"]` is used
+    # below.
     sql = (
         f"SELECT a.* FROM announcement a "
         f"LEFT JOIN resolution r ON r.ids_id = a.ids_id "
         f"WHERE a.classification IN ({placeholders}) "
         f"AND (r.ids_id IS NULL{redo}) "
+        f"GROUP BY a.ids_id "
         f"ORDER BY CASE a.classification WHEN '{CLASS_PROVIDER}' THEN 0 "
         f"WHEN '{CLASS_OTHER}' THEN 1 ELSE 2 END, a.date DESC"
     )
